@@ -1,0 +1,165 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CodeBlock from "../components/CodeBlock.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="Clustering Engine | RLSTC Documentation" currentPage="/clustering">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-coral mb-4">Engine</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">Clustering Engine</h1>
+      <p class="section-subtitle mb-12">
+        The clustering module handles incremental distance computation, cluster center updates, 
+        and supports three external clustering methods (AHC, DBSCAN, k-means).
+      </p>
+    </div>
+
+    <DiagramCard caption="Sub-trajectories are grouped into k clusters, each with a representative centroid trajectory" accent="coral">
+      <img src="/images/clustering.png" alt="Clustering Visualization" class="w-full rounded-lg" />
+    </DiagramCard>
+
+    <!-- Cluster Dictionary Structure -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">01</span> Cluster Dictionary Structure
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Clusters are stored as a <code class="text-accent text-xs">defaultdict(list)</code> with a specific 4-element structure per cluster:
+      </p>
+      <div class="glass p-5">
+        <table class="styled-table">
+          <thead><tr><th>Index</th><th>Content</th><th>Type</th></tr></thead>
+          <tbody>
+            <tr><td class="font-mono text-accent">[0]</td><td>Distance values</td><td>List[float] — distances of sub-trajs to center</td></tr>
+            <tr><td class="font-mono text-accent">[1]</td><td>Sub-trajectories</td><td>List[Traj] — member trajectories</td></tr>
+            <tr><td class="font-mono text-accent">[2]</td><td>Center points</td><td>List[Point] — representative centroid trajectory</td></tr>
+            <tr><td class="font-mono text-accent">[3]</td><td>Time index</td><td>defaultdict(list) — point aggregation by timestamp</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Incremental IED -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">02</span> Incremental IED Computation
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Instead of recomputing the full IED every time a new point is added to a sub-trajectory, 
+        the system maintains a <code class="text-teal text-xs">k_dict</code> — a per-cluster cache of partial distances:
+      </p>
+      <div class="glass p-5 mb-4">
+        <table class="styled-table">
+          <thead><tr><th>Key</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td class="font-mono text-teal">mid_dist</td><td>Accumulated distance up to the current aligned point</td></tr>
+            <tr><td class="font-mono text-teal">real_dist</td><td>mid_dist + tail distance (for non-overlapping end)</td></tr>
+            <tr><td class="font-mono text-teal">lastp</td><td>Last aligned point on the center trajectory</td></tr>
+            <tr><td class="font-mono text-teal">j</td><td>Index pointer into the center trajectory</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-sm font-semibold text-accent mb-2">incremental_sp()</h4>
+          <p class="text-text-muted text-xs">Called for the <strong>first point</strong> after a split. Computes full IED from scratch against the center trajectory, handling three cases: center ends before, at, or after the sub-trajectory.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-sm font-semibold text-teal mb-2">incremental_nsp()</h4>
+          <p class="text-text-muted text-xs">Called for <strong>subsequent points</strong>. Extends the cached distance by computing only the new segment's contribution. Handles 4 temporal alignment cases.</p>
+        </div>
+      </div>
+
+      <CodeBlock filename="cluster.py" title="incremental_mindist — Find Nearest Cluster">
+{`def incremental_mindist(trajectory, start_index, current_index, k_dict, cluster_dict, episode):
+    min_dist = 1e10
+    cluster_id = -1
+    traj_points = trajectory.points[start_index:current_index+1]
+
+    for i in cluster_dict.keys():
+        center = cluster_dict[i][2]
+        if len(center) == 0:
+            continue
+        # Update k_dict with incremental distance
+        dicts = incremental_IED(traj_points, center, k_dict, i,
+                                current_index - start_index, 0)
+        if dicts[i]['real_dist'] < min_dist:
+            min_dist = dicts[i]['real_dist']
+            cluster_id = i
+
+    return min_dist, cluster_id`}
+      </CodeBlock>
+    </section>
+
+    <!-- Center Computation -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">03</span> Center Computation
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Cluster centers are computed by averaging point positions across all member trajectories at shared timestamps. 
+        A temporal threshold groups nearby timestamps into windows, and a count threshold filters out sparse time slots.
+      </p>
+      <CodeBlock filename="cluster.py" title="computecenter — Time-Windowed Averaging">
+{`def computecenter(clus_dict, k, threshold_num, threshold_t):
+    keys = sorted(clus_dict[k][3].keys())  # All timestamps
+    sortkeys = []
+    for key in keys:
+        if clus_dict[k][3][key][1] >= threshold_num:
+            sortkeys.append(key)  # Keep dense timestamps
+
+    center = []
+    # Group timestamps within threshold_t windows
+    while i < len(sortkeys):
+        if sortkeys[i] - sortkeys[start_i] <= threshold_t:
+            # Accumulate weighted averages
+            sum_x += clus_dict[k][3][sortkeys[i]][2]
+            sum_y += clus_dict[k][3][sortkeys[i]][3]
+        else:
+            # Emit averaged center point for this window
+            center.append(Point(sum_x/count, sum_y/count, avg_t))
+    return center`}
+      </CodeBlock>
+    </section>
+
+    <!-- External Methods -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">04</span> External Clustering Methods
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        The <code class="text-accent text-xs">rl_splitmethod.py</code> module provides three clustering backends 
+        for evaluating RL-generated sub-trajectories:
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-accent mb-2">DBSCAN</h4>
+          <p class="text-text-muted text-xs">Density-based clustering using a precomputed IED distance matrix. Parameters: eps (neighborhood radius), min_samples.</p>
+        </div>
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-teal mb-2">AHC</h4>
+          <p class="text-text-muted text-xs">Agglomerative Hierarchical Clustering with average linkage. Uses precomputed distance matrix. Parameter: n_clusters.</p>
+        </div>
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-purple mb-2">k-Means</h4>
+          <p class="text-text-muted text-xs">Custom implementation using IED as distance. Iteratively reassigns trajectories to nearest center and recomputes centers. Max 30 iterations.</p>
+        </div>
+      </div>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="text-sm font-semibold text-text-primary mb-2">🔑 k-means++ Initialization</h4>
+        <p class="text-text-muted text-sm">
+          Centers are initialized using a farthest-point heuristic (<code class="text-xs text-teal">initialize_centers()</code> in initcenters.py): 
+          start with a random trajectory, then iteratively add the trajectory that maximizes the minimum IED to all existing centers.
+        </p>
+      </div>
+    </section>
+
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/distance-metrics" class="text-text-muted hover:text-text-primary text-sm transition-colors">← Distance Metrics</a>
+      <a href="/mdp-environment" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">MDP Environment →</a>
+    </div>
+  </div>
+</Layout>

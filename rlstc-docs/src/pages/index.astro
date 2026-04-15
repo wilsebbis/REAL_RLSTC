@@ -1,0 +1,400 @@
+---
+import Layout from "../layouts/Layout.astro";
+import FeatureCard from "../components/FeatureCard.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="RLSTC Documentation | Sub-Trajectory Clustering with Deep RL" currentPage="/">
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden">
+    <div class="page-content pt-16 pb-8 lg:pt-24">
+      <div class="max-w-3xl">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="badge badge-coral">Research Implementation</span>
+          <span class="badge badge-teal">Python + TensorFlow</span>
+        </div>
+        <h1 class="font-display text-4xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+          <span class="gradient-text">Sub-Trajectory Clustering</span><br />
+          <span class="text-text-primary">with Deep Reinforcement Learning</span>
+        </h1>
+        <p class="text-lg text-text-secondary leading-relaxed max-w-2xl mb-8">
+          A comprehensive deep-dive into the <strong class="text-text-primary">RLSTCcode</strong> implementation — 
+          an RL-based system that learns to segment GPS trajectories into meaningful sub-trajectories 
+          and clusters them using incremental distance metrics.
+        </p>
+
+        <div class="flex flex-wrap gap-3 mb-12">
+          <div class="glass px-4 py-2 text-sm text-text-secondary">
+            <span class="text-accent font-semibold">18</span> Python modules
+          </div>
+          <div class="glass px-4 py-2 text-sm text-text-secondary">
+            <span class="text-teal font-semibold">DQN</span> Policy Agent
+          </div>
+          <div class="glass px-4 py-2 text-sm text-text-secondary">
+            <span class="text-purple font-semibold">IED</span> Distance Metric
+          </div>
+          <div class="glass px-4 py-2 text-sm text-text-secondary">
+            <span class="text-amber font-semibold">k-fold</span> Cross-Validation
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Image -->
+    <div class="page-content pb-12">
+      <div class="diagram-container reveal">
+        <img src="/images/hero.png" alt="GPS Trajectories with RL Agent Overlay" class="w-full" />
+        <div class="diagram-caption">
+          GPS trajectories in a city with an RL agent learning optimal segmentation points
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture Overview -->
+  <section class="page-content py-12">
+    <div class="reveal">
+      <h2 class="section-title gradient-text mb-2">System Architecture</h2>
+      <p class="section-subtitle mb-10">
+        The RLSTC system combines data preprocessing, an MDP-based RL environment, 
+        a Deep Q-Network, and iterative clustering into a unified pipeline.
+      </p>
+    </div>
+
+    <!-- Architecture Diagram (inline SVG) -->
+    <div class="glass p-6 lg:p-8 mb-12 reveal">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center text-sm">
+        <!-- Layer 1 -->
+        <div class="space-y-3">
+          <div class="text-xs text-text-muted uppercase tracking-widest font-semibold mb-3">Data Layer</div>
+          <div class="glass p-3 !rounded-lg hover:!border-teal/30">
+            <div class="text-lg mb-1">📍</div>
+            <div class="font-mono text-xs text-teal">point.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">Point(x, y, t)</div>
+          </div>
+          <div class="glass p-3 !rounded-lg hover:!border-teal/30">
+            <div class="text-lg mb-1">📏</div>
+            <div class="font-mono text-xs text-teal">segment.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">Line segments</div>
+          </div>
+          <div class="glass p-3 !rounded-lg hover:!border-teal/30">
+            <div class="text-lg mb-1">🛤️</div>
+            <div class="font-mono text-xs text-teal">traj.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">Trajectory container</div>
+          </div>
+        </div>
+
+        <!-- Layer 2 -->
+        <div class="space-y-3">
+          <div class="text-xs text-text-muted uppercase tracking-widest font-semibold mb-3">Processing</div>
+          <div class="glass p-3 !rounded-lg hover:!border-purple/30">
+            <div class="text-lg mb-1">🔄</div>
+            <div class="font-mono text-xs text-purple">preprocessing.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">Filter + Normalize</div>
+          </div>
+          <div class="glass p-3 !rounded-lg hover:!border-purple/30">
+            <div class="text-lg mb-1">📐</div>
+            <div class="font-mono text-xs text-purple">trajdistance.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">IED / Fréchet / DTW</div>
+          </div>
+          <div class="glass p-3 !rounded-lg hover:!border-purple/30">
+            <div class="text-lg mb-1">🎯</div>
+            <div class="font-mono text-xs text-purple">cluster.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">Incremental clustering</div>
+          </div>
+        </div>
+
+        <!-- Layer 3 -->
+        <div class="space-y-3">
+          <div class="text-xs text-text-muted uppercase tracking-widest font-semibold mb-3">RL Engine</div>
+          <div class="glass p-3 !rounded-lg hover:!border-accent/30">
+            <div class="text-lg mb-1">🎮</div>
+            <div class="font-mono text-xs text-accent">MDP.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">RL Environment</div>
+          </div>
+          <div class="glass p-3 !rounded-lg hover:!border-accent/30">
+            <div class="text-lg mb-1">🧠</div>
+            <div class="font-mono text-xs text-accent">rl_nn.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">Deep Q-Network</div>
+          </div>
+          <div class="glass p-3 !rounded-lg hover:!border-accent/30">
+            <div class="text-lg mb-1">🏋️</div>
+            <div class="font-mono text-xs text-accent">rl_train.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">Training loop</div>
+          </div>
+        </div>
+
+        <!-- Layer 4 -->
+        <div class="space-y-3">
+          <div class="text-xs text-text-muted uppercase tracking-widest font-semibold mb-3">Evaluation</div>
+          <div class="glass p-3 !rounded-lg hover:!border-amber/30">
+            <div class="text-lg mb-1">📊</div>
+            <div class="font-mono text-xs text-amber">rl_estimate.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">Iterative inference</div>
+          </div>
+          <div class="glass p-3 !rounded-lg hover:!border-amber/30">
+            <div class="text-lg mb-1">🔀</div>
+            <div class="font-mono text-xs text-amber">crossvalidate.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">K-fold validation</div>
+          </div>
+          <div class="glass p-3 !rounded-lg hover:!border-amber/30">
+            <div class="text-lg mb-1">🧪</div>
+            <div class="font-mono text-xs text-amber">rl_splitmethod.py</div>
+            <div class="text-text-muted text-[0.65rem] mt-1">AHC / DBSCAN / K-means</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flow arrows -->
+      <div class="flex justify-center items-center gap-2 mt-6 text-text-muted text-xs">
+        <span class="text-teal">Data Layer</span>
+        <span>→</span>
+        <span class="text-purple">Processing</span>
+        <span>→</span>
+        <span class="text-accent">RL Engine</span>
+        <span>→</span>
+        <span class="text-amber">Evaluation</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Problem -->
+  <section class="page-content py-8">
+    <div class="reveal">
+      <h2 class="section-title mb-4">The Problem: Why Sub-Trajectory Clustering?</h2>
+      <div class="glass p-6 lg:p-8 space-y-4 text-text-secondary leading-relaxed">
+        <p>
+          Traditional trajectory clustering treats entire GPS tracks as atomic units. But real-world trajectories 
+          contain <strong class="text-text-primary">mixed patterns</strong> — a taxi might drive through downtown, 
+          then a highway, then suburban streets. Each portion belongs to a different spatial cluster.
+        </p>
+        <p>
+          <strong class="text-accent">Sub-trajectory clustering</strong> solves this by segmenting trajectories 
+          into meaningful parts first, then clustering the segments. The key challenge is that segmentation and 
+          clustering are <strong class="text-text-primary">interdependent</strong> — good segments depend on 
+          knowing the clusters, and good clusters depend on good segments.
+        </p>
+        <p>
+          The RLSTC approach uses <strong class="text-teal">reinforcement learning</strong> to learn segmentation: 
+          an agent walks along each trajectory point-by-point, deciding whether to <em>extend</em> the current 
+          sub-trajectory or <em>cut</em> it. The reward signal comes from clustering quality improvement.
+        </p>
+      </div>
+    </div>
+
+    <!-- Paper Fig. 1: Problem Motivation -->
+    <div class="reveal mt-6">
+      <DiagramCard caption="Fig. 1 from paper — Four dissimilar trajectories share a similar sub-portion (black box), motivating sub-trajectory clustering" accent="accent">
+        <img src="/images/paper/page_2.png" alt="Fig. 1: Four trajectories with similar sub-portions" class="w-full rounded-lg" />
+      </DiagramCard>
+    </div>
+  </section>
+
+  <!-- Key Concepts -->
+  <section class="page-content py-8">
+    <div class="reveal">
+      <h2 class="section-title gradient-text mb-2">Key Concepts</h2>
+      <p class="section-subtitle mb-8">The five pillars of the RLSTC system</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="glass p-5 reveal">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-xl">🔀</div>
+          <h3 class="font-display font-semibold text-sm">Bilevel Optimization</h3>
+        </div>
+        <p class="text-text-muted text-sm leading-relaxed">
+          Inner loop: RL agent learns segmentation policy. Outer loop: Clustering algorithm groups segments. 
+          The reward bridges both — segmentation improves clustering cohesion.
+        </p>
+      </div>
+
+      <div class="glass p-5 reveal">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center text-xl">📐</div>
+          <h3 class="font-display font-semibold text-sm">Integrated Edit Distance (IED)</h3>
+        </div>
+        <p class="text-text-muted text-sm leading-relaxed">
+          A time-aware trajectory distance metric that integrates point-to-point distances over 
+          temporally aligned segments, handling non-overlapping time ranges gracefully.
+        </p>
+      </div>
+
+      <div class="glass p-5 reveal">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl bg-purple/10 flex items-center justify-center text-xl">🎮</div>
+          <h3 class="font-display font-semibold text-sm">MDP Formulation</h3>
+        </div>
+        <p class="text-text-muted text-sm leading-relaxed">
+          Each trajectory becomes an episode. State = (overall_sim, minsim, progress). Actions = EXTEND or CUT. 
+          Reward = improvement in overall clustering distance.
+        </p>
+      </div>
+
+      <div class="glass p-5 reveal">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl bg-amber/10 flex items-center justify-center text-xl">🧠</div>
+          <h3 class="font-display font-semibold text-sm">Deep Q-Network</h3>
+        </div>
+        <p class="text-text-muted text-sm leading-relaxed">
+          A compact 5→64→2 neural network with Huber loss, experience replay (5000 transitions), 
+          ε-greedy exploration, and soft target network updates.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation Grid -->
+  <section class="page-content py-12">
+    <div class="reveal">
+      <h2 class="section-title mb-2">Explore the Codebase</h2>
+      <p class="section-subtitle mb-8">Detailed walkthrough of every module</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="reveal">
+        <FeatureCard
+          title="Data Structures"
+          description="Point, Point_xy, Segment, and Traj — the building blocks of spatio-temporal trajectories."
+          href="/data-structures"
+          icon="🔷"
+          accent="teal"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="Preprocessing"
+          description="GPS filtering, coordinate normalization, length clamping, and MDL-based trajectory simplification."
+          href="/preprocessing"
+          icon="🔄"
+          accent="purple"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="Distance Metrics"
+          description="IED, Fréchet distance, DTW, and weighted segment distance — the mathematical foundations."
+          href="/distance-metrics"
+          icon="📐"
+          accent="amber"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="Clustering Engine"
+          description="Incremental IED computation, center updates, k-means, DBSCAN, and agglomerative clustering."
+          href="/clustering"
+          icon="🎯"
+          accent="coral"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="MDP Environment"
+          description="The RL environment that converts trajectories into sequential decision problems."
+          href="/mdp-environment"
+          icon="🎮"
+          accent="coral"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="Neural Network"
+          description="Deep Q-Network architecture with replay buffer, target network, and Huber loss."
+          href="/neural-network"
+          icon="🧠"
+          accent="teal"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="Training Pipeline"
+          description="Episode-based training with exploration, validation checkpoints, and cross-training."
+          href="/training"
+          icon="🏋️"
+          accent="purple"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="Evaluation"
+          description="Iterative inference, center convergence, k-fold cross-validation, and SSE computation."
+          href="/evaluation"
+          icon="📊"
+          accent="amber"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="Experiments"
+          description="Effectiveness, efficiency, segmentation methods, training data size, and k sensitivity."
+          href="/experiments"
+          icon="🧪"
+          accent="coral"
+        />
+      </div>
+      <div class="reveal">
+        <FeatureCard
+          title="The Paper"
+          description="Full VLDB 2024 paper with original figures, tables, baselines, and all 18 pages."
+          href="/paper"
+          icon="📄"
+          accent="accent"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start -->
+  <section class="page-content py-12 pb-24">
+    <div class="reveal">
+      <h2 class="section-title mb-6">Quick Start</h2>
+    </div>
+
+    <div class="glass p-6 reveal">
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-sm font-semibold text-text-primary mb-2 font-display">1. Preprocessing</h3>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot" style="background: #ff5f57;"></span>
+              <span class="dot" style="background: #febc2e;"></span>
+              <span class="dot" style="background: #28c840;"></span>
+              <span class="ml-2">terminal</span>
+            </div>
+            <pre class="text-text-secondary text-sm"><code>cd subtrajcluster/
+python preprocessing.py</code></pre>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-text-primary mb-2 font-display">2. Training</h3>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot" style="background: #ff5f57;"></span>
+              <span class="dot" style="background: #febc2e;"></span>
+              <span class="dot" style="background: #28c840;"></span>
+              <span class="ml-2">terminal</span>
+            </div>
+            <pre class="text-text-secondary text-sm"><code>python rl_train.py          # Single training
+python crosstrain.py        # K-fold cross-training</code></pre>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-semibold text-text-primary mb-2 font-display">3. Evaluation</h3>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="dot" style="background: #ff5f57;"></span>
+              <span class="dot" style="background: #febc2e;"></span>
+              <span class="dot" style="background: #28c840;"></span>
+              <span class="ml-2">terminal</span>
+            </div>
+            <pre class="text-text-secondary text-sm"><code>python rl_estimate.py       # Inference + iterative refinement
+python crossvalidate.py     # K-fold validation</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

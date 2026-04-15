@@ -1,0 +1,244 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CodeBlock from "../components/CodeBlock.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="Data Structures | RLSTC Documentation" currentPage="/data-structures">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-teal mb-4">Core Layer</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">Data Structures</h1>
+      <p class="section-subtitle mb-12">
+        Four foundational classes represent spatio-temporal data: 3D points, 2D geometric points, 
+        line segments with distance metrics, and trajectory containers.
+      </p>
+    </div>
+
+    <!-- Class Hierarchy Diagram -->
+    <DiagramCard caption="Class hierarchy — Point and Point_xy serve different roles (temporal vs geometric)" accent="teal">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="glass p-4 !rounded-lg">
+          <div class="text-2xl mb-2">📍</div>
+          <div class="font-mono text-sm text-teal font-semibold">Point</div>
+          <div class="text-text-muted text-xs mt-1">(x, y, t)</div>
+          <div class="text-text-muted text-[0.65rem] mt-2">Spatio-temporal</div>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <div class="text-2xl mb-2">🔵</div>
+          <div class="font-mono text-sm text-teal font-semibold">Point_xy</div>
+          <div class="text-text-muted text-xs mt-1">(x, y)</div>
+          <div class="text-text-muted text-[0.65rem] mt-2">2D Geometric</div>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <div class="text-2xl mb-2">📏</div>
+          <div class="font-mono text-sm text-teal font-semibold">Segment</div>
+          <div class="text-text-muted text-xs mt-1">(start, end)</div>
+          <div class="text-text-muted text-[0.65rem] mt-2">Line segment</div>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <div class="text-2xl mb-2">🛤️</div>
+          <div class="font-mono text-sm text-teal font-semibold">Traj</div>
+          <div class="text-text-muted text-xs mt-1">(points, size, ts, te)</div>
+          <div class="text-text-muted text-[0.65rem] mt-2">Trajectory</div>
+        </div>
+      </div>
+    </DiagramCard>
+
+    <!-- Point Class -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">01</span> Point — Spatio-Temporal Point
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        The fundamental atom of the system. Every GPS reading becomes a <code class="text-teal bg-teal/10 px-1.5 py-0.5 rounded text-xs">Point(x, y, t)</code> 
+        where <strong>x</strong> is longitude, <strong>y</strong> is latitude, and <strong>t</strong> is the timestamp (after normalization).
+      </p>
+
+      <CodeBlock filename="point.py" title="point.py — Spatio-Temporal Point">
+{`class Point(object):
+    def __init__(self, x, y, t):
+        self.x = x          # longitude (or normalized x)
+        self.y = y          # latitude (or normalized y)
+        self.t = t          # timestamp (normalized)
+
+    def distance(self, other):
+        # Euclidean distance in spatial dimensions only (ignores time)
+        return math.sqrt(
+            math.pow(self.x - other.x, 2) +
+            math.pow(self.y - other.y, 2)
+        )
+
+    def equal(self, other):
+        # Exact equality check across all dimensions
+        if self.x == other.x and self.y == other.y and self.t == other.t:
+            return True`}
+      </CodeBlock>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="font-semibold text-sm text-text-primary mb-2">💡 Design Note</h4>
+        <p class="text-text-muted text-sm">
+          The <code class="text-teal text-xs">distance()</code> method deliberately excludes the temporal dimension — 
+          it computes <em>spatial</em> distance only. Time is used for alignment in trajectory distance calculations 
+          (like IED), not for point-level distance.
+        </p>
+      </div>
+    </section>
+
+    <!-- Point_xy Class -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">02</span> Point_xy — 2D Geometric Point
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Used exclusively in segment distance computations (perpendicular, parallel, angle distances). 
+        Supports full vector algebra: addition, subtraction, scalar multiplication, dot product.
+      </p>
+
+      <CodeBlock filename="point_xy.py" title="point_xy.py — 2D Vector Operations">
+{`class Point_xy(object):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __add__(self, other):    # Vector addition
+        return Point_xy(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):    # Vector subtraction
+        return Point_xy(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, x):        # Scalar multiplication
+        return Point_xy(self.x * x, self.y * x)
+
+    def dot(self, other):        # Dot product
+        return self.x * other.x + self.y * other.y
+
+    def as_array(self):          # NumPy conversion
+        return np.array((self.x, self.y))
+
+# Standalone helper: perpendicular distance from point to line
+def _point2line_distance(point, start, end):
+    if np.all(np.equal(start, end)):
+        return np.linalg.norm(point - start)
+    return np.divide(
+        np.abs(np.linalg.norm(np.cross(end - start, start - point))),
+        np.linalg.norm(end - start)
+    )`}
+      </CodeBlock>
+    </section>
+
+    <!-- Segment Class -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">03</span> Segment — Line Segment with Distance Metrics
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Represents a directed line segment between two <code class="text-teal bg-teal/10 px-1.5 py-0.5 rounded text-xs">Point_xy</code> endpoints. 
+        Implements three fundamental distance metrics from the TRACLUS framework:
+      </p>
+
+      <!-- Three distances diagram -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="glass p-5 !rounded-lg">
+          <div class="text-center mb-3">
+            <div class="text-2xl">⊥</div>
+          </div>
+          <h4 class="font-semibold text-sm text-accent text-center mb-2">Perpendicular Distance</h4>
+          <p class="text-text-muted text-xs leading-relaxed text-center">
+            Measures how far the endpoints of one segment project onto the other. 
+            Uses squared distances divided by their sum: d²₁ + d²₂ / (d₁ + d₂)
+          </p>
+        </div>
+        <div class="glass p-5 !rounded-lg">
+          <div class="text-center mb-3">
+            <div class="text-2xl">∥</div>
+          </div>
+          <h4 class="font-semibold text-sm text-teal text-center mb-2">Parallel Distance</h4>
+          <p class="text-text-muted text-xs leading-relaxed text-center">
+            Minimum distance between projection points and segment endpoints. 
+            Captures how much the segments are "shifted" along their common direction.
+          </p>
+        </div>
+        <div class="glass p-5 !rounded-lg">
+          <div class="text-center mb-3">
+            <div class="text-2xl">∠</div>
+          </div>
+          <h4 class="font-semibold text-sm text-purple text-center mb-2">Angle Distance</h4>
+          <p class="text-text-muted text-xs leading-relaxed text-center">
+            Based on the sine of the angle between segments: other.length × √(1 - cos²θ). 
+            Captures directional deviation. Zero when parallel.
+          </p>
+        </div>
+      </div>
+
+      <CodeBlock filename="segment.py" title="segment.py — Key Distance Methods">
+{`class Segment(object):
+    eps = 1e-12
+
+    def __init__(self, start_point, end_point, traj_id=None):
+        self.start = start_point
+        self.end = end_point
+
+    @property
+    def length(self):
+        return self.end.distance(self.start)
+
+    def perpendicular_distance(self, other):
+        l1 = other.start.distance(self._projection_point(other, "start"))
+        l2 = other.end.distance(self._projection_point(other, "end"))
+        if l1 < self.eps and l2 < self.eps:
+            return 0
+        return (l1**2 + l2**2) / (l1 + l2)
+
+    def angle_distance(self, other):
+        # ... cosine similarity between direction vectors
+        cos_theta = self_vector.dot(other_vector) / (self_dist * other_dist)
+        if cos_theta > self.eps:
+            return other.length * math.sqrt(1 - cos_theta**2)
+        return other.length  # Maximum angle distance
+
+    def get_all_distance(self, seg):
+        # Combined distance used in weighted distance (wd_dist)
+        return self.angle_distance(seg) + \\
+               self.parallel_distance(seg) + \\
+               self.perpendicular_distance(seg)`}
+      </CodeBlock>
+    </section>
+
+    <!-- Traj Class -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">04</span> Traj — Trajectory Container
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        The simplest data structure — a plain container that wraps a list of Points with metadata. 
+        Used throughout the system as the basic unit of data.
+      </p>
+
+      <CodeBlock filename="traj.py" title="traj.py — Trajectory Container">
+{`class Traj(object):
+    def __init__(self, points, size, ts, te, traj_id=None):
+        self.points  = points    # List[Point] — ordered sequence
+        self.size    = size      # int — number of points
+        self.ts      = ts        # float — start timestamp
+        self.te      = te        # float — end timestamp
+        self.traj_id = traj_id   # int — trajectory identifier`}
+      </CodeBlock>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="font-semibold text-sm text-text-primary mb-2">📋 Usage Pattern</h4>
+        <p class="text-text-muted text-sm">
+          <code class="text-teal text-xs">Traj</code> objects are created during preprocessing (from raw GPS data), 
+          during segmentation (sub-trajectories created by the RL agent's CUT actions), and during center computation 
+          (cluster representative trajectories). The same class serves all three use cases.
+        </p>
+      </div>
+    </section>
+
+    <!-- Navigation -->
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/" class="text-text-muted hover:text-text-primary text-sm transition-colors">← Overview</a>
+      <a href="/preprocessing" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">Preprocessing →</a>
+    </div>
+  </div>
+</Layout>

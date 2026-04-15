@@ -1,0 +1,164 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CodeBlock from "../components/CodeBlock.astro";
+import FlowStep from "../components/FlowStep.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="Training Pipeline | RLSTC Documentation" currentPage="/training">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-purple mb-4">Training</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">Training Pipeline</h1>
+      <p class="section-subtitle mb-12">
+        Two training scripts are provided: <code class="text-accent text-sm">rl_train.py</code> for single training 
+        and <code class="text-purple text-sm">crosstrain.py</code> for k-fold cross-validation training.
+      </p>
+    </div>
+
+    <DiagramCard caption="The RL training loop: Environment → Agent → Action → Reward → Replay → Update → repeat" accent="purple">
+      <img src="/images/training.png" alt="Training Loop Diagram" class="w-full rounded-lg" />
+    </DiagramCard>
+
+    <!-- Training Loop -->
+    <section class="mt-12 mb-16">
+      <div class="reveal">
+        <h2 class="text-xl font-display font-bold text-text-primary mb-6 flex items-center gap-2">
+          <span class="text-purple">01</span> Single Training — rl_train.py
+        </h2>
+      </div>
+
+      <FlowStep step={1} title="Initialization" accent="purple">
+        <p>Load preprocessed trajectories, initialize cluster centers from a base clustering, create the DQN with 5 input features and 2 actions.</p>
+        <CodeBlock filename="rl_train.py" title="Setup">
+{`env = TrajRLclus(args.traindata, args.baseclusT, args.baseclusE)
+RL = DeepQNetwork(env.n_features, env.n_actions)
+# Split: 90% train, 10% validation
+sidx = int(amount * 0.9)
+eidx = amount`}
+        </CodeBlock>
+      </FlowStep>
+
+      <FlowStep step={2} title="Episode Loop (2 Rounds)" accent="teal">
+        <p>The training runs for <strong>2 rounds</strong> over all trajectories. Each round shuffles the episode order to prevent ordering bias. Each trajectory is one episode.</p>
+        <CodeBlock filename="rl_train.py" title="Main Training Loop">
+{`Round = 2
+while Round != 0:
+    random.shuffle(idxlist)
+    Round -= 1
+    for episode in idxlist:
+        observation, steps = env.reset(episode, 'T')
+        for index in range(1, steps):
+            done = (index == steps - 1)
+            action = RL.act(observation)         # ε-greedy
+            observation_, reward = env.step(episode, action, index, 'T')
+            RL.remember(observation, action, reward, observation_, done)
+            if len(RL.memory) > batch_size:
+                RL.replay(episode, batch_size)   # Train on mini-batch
+                RL.soft_update(0.05)             # Polyak average
+            observation = observation_`}
+        </CodeBlock>
+      </FlowStep>
+
+      <FlowStep step={3} title="Periodic Validation (every 500 episodes)" accent="coral">
+        <p>Every 500 episodes, the model is evaluated on the validation set (last 10% of trajectories). The Competitive Ratio (CR) is computed:</p>
+        <div class="math-block">
+          <span class="text-text-primary font-mono">CR = OD_validation / baseline_OD</span>
+        </div>
+        <CodeBlock filename="rl_train.py" title="Validation & Checkpointing">
+{`if episode % 500 == 0 and episode != 0:
+    aver_cr = evaluate(validation_episodes)
+    # Reset validation clusters for next evaluation
+    for i in env.clusters_E.keys():
+        env.clusters_E[i][0] = []
+        env.clusters_E[i][1] = []
+        env.clusters_E[i][3] = defaultdict(list)
+
+    # Save model checkpoint (always on 500-interval, best on CR improvement)
+    if aver_cr < check or episode % 500 == 0:
+        RL.save(saveclus + '/sub-RL-' + str(aver_cr) + '.h5')
+    if aver_cr < check:
+        check = aver_cr
+        print('maintain the current best', check)`}
+        </CodeBlock>
+      </FlowStep>
+
+      <FlowStep step={4} title="Center Update (end of each round)" accent="amber">
+        <p>After processing all trajectories in a round, cluster centers are recomputed using the accumulated sub-trajectories, preparing for the next round.</p>
+        <CodeBlock filename="rl_train.py" title="Center Update">
+{`env.update_cluster('T')
+# Internally calls: update_centers(clusters_T, threshold_num=3, threshold_t=0.095)
+# Then resets per-cluster distance and trajectory lists`}
+        </CodeBlock>
+      </FlowStep>
+    </section>
+
+    <!-- Cross-Training -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-purple">02</span> K-Fold Cross-Training — crosstrain.py
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Trains <strong>k separate models</strong> (default k=5) using k-fold cross-validation. 
+        Each fold uses a different train/test split, producing k models that can be evaluated independently.
+      </p>
+
+      <!-- K-fold diagram -->
+      <DiagramCard caption="5-fold cross-validation: each fold trains on 80% and validates on 20%" accent="purple">
+        <div class="space-y-2">
+          {[0,1,2,3,4].map((fold) => (
+            <div class="flex gap-1">
+              <div class="text-[0.65rem] text-text-muted w-12 shrink-0 text-right mr-2 leading-6">Fold {fold}</div>
+              {[0,1,2,3,4].map((chunk) => (
+                <div
+                  class={`flex-1 h-6 rounded text-[0.6rem] flex items-center justify-center font-mono ${
+                    chunk === fold
+                      ? 'bg-accent/30 border border-accent/40 text-accent'
+                      : 'bg-teal/15 border border-teal/20 text-teal'
+                  }`}
+                >
+                  {chunk === fold ? 'TEST' : 'TRAIN'}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </DiagramCard>
+
+      <CodeBlock filename="crosstrain.py" title="K-Fold Dataset Splitting">
+{`def ksplitdataset(trajs, k, dataset):
+    index_list = list(range(len(trajs)))
+    random.shuffle(index_list)
+    shuffled_trajs = [trajs[i] for i in index_list]
+    chunk_size = len(shuffled_trajs) // k
+    chunks = [shuffled_trajs[i:i+chunk_size]
+              for i in range(0, len(shuffled_trajs), chunk_size)]
+
+    for j in range(k):
+        test_set = chunks[j]
+        train_set = [item for i, sub in enumerate(chunks)
+                     if i != j for item in sub]
+        pickle.dump(test_set, open(f'../data/{dataset}_testset_{j}', 'wb'))
+        pickle.dump(train_set, open(f'../data/{dataset}_trainset_{j}', 'wb'))`}
+      </CodeBlock>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="font-semibold text-sm text-text-primary mb-2">⚙️ Crosstrain Differences</h4>
+        <table class="styled-table">
+          <thead><tr><th>Parameter</th><th>rl_train.py</th><th>crosstrain.py</th></tr></thead>
+          <tbody>
+            <tr><td>Rounds</td><td class="font-mono">2</td><td class="font-mono">1</td></tr>
+            <tr><td>Soft update τ</td><td class="font-mono">0.05</td><td class="font-mono">0.001</td></tr>
+            <tr><td>Models produced</td><td class="font-mono">1</td><td class="font-mono">k (default: 5)</td></tr>
+            <tr><td>Data per model</td><td>Full dataset</td><td>~80% per fold</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/neural-network" class="text-text-muted hover:text-text-primary text-sm transition-colors">← Neural Network</a>
+      <a href="/evaluation" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">Evaluation →</a>
+    </div>
+  </div>
+</Layout>

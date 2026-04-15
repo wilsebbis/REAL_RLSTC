@@ -1,0 +1,398 @@
+---
+import Layout from "../layouts/Layout.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="The Paper | RLSTC Documentation" currentPage="/paper">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-accent mb-4">VLDB Journal 2024</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">
+        Sub-trajectory Clustering with Deep Reinforcement Learning
+      </h1>
+      <p class="section-subtitle mb-4">
+        Anqi Liang, Bin Yao, Bo Wang, Yinpei Liu, Zhida Chen, Jiong Xie, Feifei Li
+      </p>
+      <p class="text-text-muted text-sm mb-8">
+        The VLDB Journal (2024) 33:685–702 &nbsp;·&nbsp;
+        <a href="https://doi.org/10.1007/s00778-023-00833-w" class="text-accent hover:text-accent-hover transition-colors" target="_blank" rel="noopener">
+          doi:10.1007/s00778-023-00833-w
+        </a>
+        &nbsp;·&nbsp; Shanghai Jiao Tong University &amp; Alibaba Group
+      </p>
+    </div>
+
+    <!-- Abstract -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Abstract
+      </h2>
+      <div class="glass p-6 !rounded-lg leading-relaxed text-text-secondary">
+        Sub-trajectory clustering is a fundamental problem in many trajectory applications. Existing approaches usually
+        divide the clustering procedure into two phases: segmenting trajectories into sub-trajectories and then clustering
+        these sub-trajectories. However, researchers need to develop complex human-crafted segmentation rules for
+        specific applications, making the clustering results sensitive to the segmentation rules and lacking in generality.
+        To solve this problem, we propose a novel algorithm using the clustering results to <em class="text-accent">guide</em> the segmentation,
+        which is based on <strong class="text-text-primary">reinforcement learning (RL)</strong>. The novelty is that the segmentation and clustering components
+        cooperate closely and improve each other continuously to yield better clustering results. We model the
+        procedure of trajectory segmentation as a <strong class="text-text-primary">Markov decision process (MDP)</strong> and apply
+        <strong class="text-text-primary">Deep-Q-Network (DQN)</strong> learning to train an RL model for the segmentation and achieve excellent clustering
+        results. Experimental results on real datasets demonstrate the superior performance of the proposed RL-based
+        approach over state-of-the-art methods.
+      </div>
+    </section>
+
+    <!-- Key Contributions -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Key Contributions
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass p-5 !rounded-lg">
+          <div class="text-accent text-lg mb-2">🧠</div>
+          <h4 class="text-sm font-semibold text-text-primary mb-1">First RL-Based Framework</h4>
+          <p class="text-text-muted text-xs">First RL-based solution for sub-trajectory clustering, modeling segmentation as an MDP with data-driven trajectory segmentation.</p>
+        </div>
+        <div class="glass p-5 !rounded-lg">
+          <div class="text-teal text-lg mb-2">🎯</div>
+          <h4 class="text-sm font-semibold text-text-primary mb-1">Creative MDP Design</h4>
+          <p class="text-text-muted text-xs">5-feature state (OD_s, OD_n, OD_b, L_b, L_f) with reward derived from clustering quality, achieving data-driven segmentation without hand-crafted rules.</p>
+        </div>
+        <div class="glass p-5 !rounded-lg">
+          <div class="text-amber text-lg mb-2">⚡</div>
+          <h4 class="text-sm font-semibold text-text-primary mb-1">Efficiency Optimizations</h4>
+          <p class="text-text-muted text-xs">MDL-based preprocessing, trapezoid approximation for IED, and incremental O(1) computation reduce distance computation cost per point.</p>
+        </div>
+        <div class="glass p-5 !rounded-lg">
+          <div class="text-purple text-lg mb-2">📊</div>
+          <h4 class="text-sm font-semibold text-text-primary mb-1">Superior Results</h4>
+          <p class="text-text-muted text-xs">Outperforms 8 baselines: 36% OD improvement on T-Drive, 39% on Geolife. 57% and 44% SSE improvements respectively.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Figure 1: Problem Motivation -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Problem Motivation
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Four dissimilar trajectories share a similar portion (the black box in Fig. 1). Clustering whole trajectories
+        fails to discover this local similarity — sub-trajectory clustering enables finding common patterns among
+        trajectory portions, critical for applications like hurricane forecasting, traffic analysis, and site selection.
+      </p>
+      <DiagramCard caption="Fig. 1 — Four dissimilar trajectories with a similar portion (the part in the black box)" accent="accent">
+        <img src="/images/paper/page_2.png" alt="Fig. 1: Problem motivation — four trajectories with similar sub-portions" class="w-full rounded-lg" />
+      </DiagramCard>
+    </section>
+
+    <!-- Framework Overview — Fig. 4 & 5 -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Framework Overview
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        The RLSTC framework consists of an offline DQN training phase and an online RLSTC algorithm with interacting 
+        segmentation and clustering components. The segmentation is modeled as an MDP where the agent observes 
+        clustering quality features and decides whether to cut at each trajectory point.
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <DiagramCard caption="Fig. 4 — Overview of the RL-based Solution" accent="teal">
+          <img src="/images/paper/page_6.png" alt="Fig. 4: RL-based solution overview showing offline training and online RLSTC algorithm" class="w-full rounded-lg" />
+        </DiagramCard>
+        <DiagramCard caption="Fig. 6 — DQN learning procedure with replay memory and dual networks" accent="amber">
+          <img src="/images/paper/page_8.png" alt="Fig. 6: DQN learning illustration with main network, target network, replay memory" class="w-full rounded-lg" />
+        </DiagramCard>
+      </div>
+    </section>
+
+    <!-- State Definition -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> MDP State Design
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        The state combines clustering quality signals with trajectory geometry. The paper defines 5 features that 
+        balance expressiveness with training efficiency:
+      </p>
+      <div class="glass p-5 mb-4">
+        <div class="math-block text-center">
+          <span class="text-text-primary font-mono text-sm">
+            s<sub>t</sub> = (s<sub>t</sub>(OD<sub>s</sub>), s<sub>t</sub>(OD<sub>n</sub>), OD<sub>b</sub>, s<sub>t</sub>(L<sub>b</sub>), s<sub>t</sub>(L<sub>f</sub>))
+          </span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-accent mb-1">OD<sub>s</sub> — Segment OD</h4>
+          <p class="text-text-muted text-xs">Overall distance if we <em>do</em> segment at current point. Computed incrementally (Eq. 15).</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-teal mb-1">OD<sub>n</sub> — No-Segment OD</h4>
+          <p class="text-text-muted text-xs">Overall distance if we <em>don't</em> segment. Equal to previous OD (Eq. 16).</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-amber mb-1">OD<sub>b</sub> — Baseline OD</h4>
+          <p class="text-text-muted text-xs">Expert knowledge from TRACLUS segmentation (Eq. 18). Accelerates convergence.</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-purple mb-1">L<sub>b</sub> — Backward Length</h4>
+          <p class="text-text-muted text-xs">Fraction of trajectory consumed by the current sub-trajectory: m₁ / |T|</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-coral mb-1">L<sub>f</sub> — Forward Length</h4>
+          <p class="text-text-muted text-xs">Fraction of trajectory remaining: m₂ / |T|. Prevents myopic segmentation decisions.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reward & Bellman -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Reward Function & Learning
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-text-primary mb-2">Immediate Reward</h4>
+          <div class="math-block my-3">
+            <span class="text-text-primary font-mono text-sm">r<sub>t</sub> = s<sub>t</sub>(OD) − s<sub>t+1</sub>(OD)</span>
+          </div>
+          <p class="text-text-muted text-xs">
+            Maximizing cumulative reward R = s₁(OD) − s<sub>|T|</sub>(OD) is equivalent to minimizing final OD.
+          </p>
+        </div>
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-text-primary mb-2">Bellman Equation</h4>
+          <div class="math-block my-3">
+            <span class="text-text-primary font-mono text-sm">Q*(s,a) = E[r<sub>t</sub> + γ max<sub>a'</sub> Q*(s<sub>t+1</sub>,a') | s<sub>t</sub>,a<sub>t</sub>]</span>
+          </div>
+          <p class="text-text-muted text-xs">
+            γ = 0.99. DQN approximates Q* with neural network parameters θ, trained via MSE loss with target network soft-updates (ω = 0.001).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Algorithms -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Algorithms
+      </h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <DiagramCard caption="Algorithm 2 — DQN learning with ε-greedy, replay memory, and soft target updates" accent="accent">
+          <img src="/images/paper/page_8.png" alt="Algorithm 2: DQN learning pseudocode" class="w-full rounded-lg" />
+        </DiagramCard>
+        <DiagramCard caption="Algorithm 3 — RLSTC: iterative segmentation + clustering until center convergence" accent="teal">
+          <img src="/images/paper/page_9.png" alt="Algorithm 3: RLSTC algorithm with center computation" class="w-full rounded-lg" />
+        </DiagramCard>
+      </div>
+    </section>
+
+    <!-- Experimental Results -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Experimental Results
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Evaluated on <strong class="text-text-primary">T-Drive</strong> (9,937 taxi trajectories, Beijing) and 
+        <strong class="text-text-primary">Geolife</strong> (17,070 GPS trajectories, 182 users). Compared against 8 baselines:
+        TRACLUS, S²T-Clustering, SubCLUS, Greedy, CLUSTMOSA, HyperCLUS, RTCLUS, and RLSTC w/o simplification.
+      </p>
+
+      <DiagramCard caption="Fig. 8 & 9 — Clustering quality (OD and SSE) across 4 distance metrics on T-Drive and Geolife" accent="coral">
+        <img src="/images/paper/page_12.png" alt="Figures 8 and 9: OD and SSE comparison bar charts across distance metrics" class="w-full rounded-lg" />
+      </DiagramCard>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="font-semibold text-sm text-text-primary mb-3">Key Findings</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-text-muted"><strong class="text-accent">OD Improvement</strong></p>
+            <ul class="text-text-muted text-xs mt-1 space-y-1 ml-4 list-disc">
+              <li>T-Drive: <strong>36%</strong> average improvement over baselines</li>
+              <li>Geolife: <strong>39%</strong> average improvement over baselines</li>
+            </ul>
+          </div>
+          <div>
+            <p class="text-text-muted"><strong class="text-teal">SSE Improvement</strong></p>
+            <ul class="text-text-muted text-xs mt-1 space-y-1 ml-4 list-disc">
+              <li>T-Drive: <strong>57%</strong> average improvement</li>
+              <li>Geolife: <strong>44%</strong> average improvement</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Segmentation Method Comparison -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Segmentation Method Comparison
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        RLSTC-S (the segmentation component alone) outperforms all baselines across AHC, DBSCAN, and k-means
+        clustering methods with 4 distance metrics, demonstrating adaptability.
+      </p>
+      <DiagramCard caption="Fig. 12 — Performance of different segmentation methods across AHC, DBSCAN, and k-means" accent="purple">
+        <img src="/images/paper/page_14.png" alt="Fig. 12: Segmentation method comparison across clustering algorithms" class="w-full rounded-lg" />
+      </DiagramCard>
+    </section>
+
+    <!-- Parameter Studies -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Parameter Studies
+      </h2>
+      <DiagramCard caption="Figs. 13-16 — Impact of OD_b, training data size, iterations, and Geolife visualization" accent="amber">
+        <img src="/images/paper/page_15.png" alt="Parameter study results: OD_b ablation, training size trade-off, iteration convergence, and visualization" class="w-full rounded-lg" />
+      </DiagramCard>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="font-semibold text-sm text-text-primary mb-3">Paper Tables — k-Value Sensitivity</h4>
+        <table class="styled-table">
+          <thead>
+            <tr><th>k</th><th>5</th><th>8</th><th>10</th><th>12</th><th>14</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="font-semibold text-text-primary">T-Drive OD</td><td>0.49</td><td>0.46</td><td class="text-accent font-semibold">0.21</td><td>0.44</td><td>0.42</td></tr>
+            <tr><td class="font-semibold text-text-primary">Geolife OD</td><td>0.052</td><td>0.051</td><td class="text-accent font-semibold">0.023</td><td>0.051</td><td>0.04</td></tr>
+          </tbody>
+        </table>
+        <p class="text-text-muted text-xs mt-2">Table 2 — k = 10 achieves the best clustering quality on both datasets.</p>
+      </div>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="font-semibold text-sm text-text-primary mb-3">Pretrained Model Portability (k = 10)</h4>
+        <table class="styled-table">
+          <thead>
+            <tr><th>Test k</th><th>5</th><th>8</th><th>10</th><th>12</th><th>15</th><th>20</th><th>40</th><th>60</th><th>80</th><th>100</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="font-semibold text-text-primary">T-Drive</td><td>0.25</td><td>0.22</td><td class="text-accent font-semibold">0.21</td><td>0.26</td><td>0.26</td><td class="text-coral">0.51</td><td class="text-coral">0.59</td><td class="text-coral">0.61</td><td class="text-coral">0.60</td><td class="text-coral">0.62</td></tr>
+            <tr><td class="font-semibold text-text-primary">Geolife</td><td>0.04</td><td>0.04</td><td class="text-accent font-semibold">0.02</td><td>0.03</td><td>0.04</td><td class="text-coral">0.08</td><td class="text-coral">0.09</td><td class="text-coral">0.10</td><td class="text-coral">0.09</td><td class="text-coral">0.12</td></tr>
+          </tbody>
+        </table>
+        <p class="text-text-muted text-xs mt-2">Table 3 — When test k differs from training k by &gt;50%, performance degrades substantially.</p>
+      </div>
+    </section>
+
+    <!-- Hyperparameters -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Hyperparameter Summary
+      </h2>
+      <div class="glass p-5">
+        <table class="styled-table">
+          <thead>
+            <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Network</td><td class="font-mono text-xs">5 → 64 → 2</td><td>Two-layer feedforward with ReLU</td></tr>
+            <tr><td>Learning Rate</td><td class="font-mono text-xs">0.001</td><td>SGD optimizer</td></tr>
+            <tr><td>ε (exploration)</td><td class="font-mono text-xs">1.0 → 0.99ε (min 0.1)</td><td>Decays per step</td></tr>
+            <tr><td>γ (discount)</td><td class="font-mono text-xs">0.99</td><td>High future-reward weight</td></tr>
+            <tr><td>Replay memory</td><td class="font-mono text-xs">5,000</td><td>Fixed-size FIFO buffer</td></tr>
+            <tr><td>Batch size</td><td class="font-mono text-xs">32</td><td>Per gradient step</td></tr>
+            <tr><td>Target update ω</td><td class="font-mono text-xs">0.001</td><td>Soft update: θ' = ωθ + (1−ω)θ'</td></tr>
+            <tr><td>k (clusters)</td><td class="font-mono text-xs">10</td><td>Default; tested 5, 8, 10, 12, 14</td></tr>
+            <tr><td>τ (convergence)</td><td class="font-mono text-xs">0.1</td><td>Max center drift threshold</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Baselines -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Baselines Compared
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-accent mb-1">TRACLUS (Lee et al., 2007)</h4>
+          <p class="text-text-muted text-xs">MDL segmentation + DBSCAN clustering. Classical partition-and-group framework.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-teal mb-1">S²T-Clustering (Pelekis et al., 2017)</h4>
+          <p class="text-text-muted text-xs">Global voting with local density for segmentation and clustering.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-amber mb-1">SubCLUS (Agarwal et al., 2018)</h4>
+          <p class="text-text-muted text-xs">Models problem as set-cover. Approximation solution. Fréchet distance only.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-purple mb-1">Greedy Method</h4>
+          <p class="text-text-muted text-xs">Degraded RLSTC: segments iff OD_s &lt; OD_n. Local optima trap.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-coral mb-1">CLUSTMOSA (Dutta et al., 2022)</h4>
+          <p class="text-text-muted text-xs">Multi-objective simulated annealing with bearing-based segmentation.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-text-secondary mb-1">HyperCLUS (Xia et al.)</h4>
+          <p class="text-text-muted text-xs">Segments into hypercubes. Fast but imprecise trajectory representation.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-text-secondary mb-1">RTCLUS (Qiao et al., 2022)</h4>
+          <p class="text-text-muted text-xs">Uses MBRs + R-tree index. Fast clustering but approximate distances.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-xs font-semibold text-text-secondary mb-1">RLSTC w/o simplification</h4>
+          <p class="text-text-muted text-xs">Ablation: same RL segmentation but skips MDL preprocessing. Slower but similar OD.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Time Complexity -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Time Complexity
+      </h2>
+      <div class="glass p-5">
+        <div class="math-block text-center mb-4">
+          <span class="text-text-primary font-mono">Total = O(c · (nN + mM + m'))</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-text-muted">
+          <div>
+            <strong class="text-text-primary">Per-point cost: O(1)</strong><br/>
+            State, action, cluster assignment, and update — all incremental.
+          </div>
+          <div>
+            <strong class="text-text-primary">Per-iteration: O(nN)</strong><br/>
+            n = avg trajectory length, N = total trajectories. Dominates mM and m' terms.
+          </div>
+          <div>
+            <strong class="text-text-primary">Total: ≈ O(nN)</strong><br/>
+            c iterations converge quickly (typically &lt; 10). Overall approximated as O(nN).
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Full Paper Pages Gallery -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">§</span> Full Paper Pages
+      </h2>
+      <p class="text-text-secondary mb-6 text-sm">
+        The complete 18-page paper from The VLDB Journal (2024), pages 685–702. Click any page to enlarge.
+      </p>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {Array.from({ length: 18 }, (_, i) => i + 1).map((num) => (
+          <a href={`/images/paper/page_${num}.png`} target="_blank" rel="noopener"
+             class="glass p-2 !rounded-lg hover:border-accent/30 transition-all group">
+            <img src={`/images/paper/page_${num}.png`} alt={`Paper page ${num}`}
+                 class="w-full rounded opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" />
+            <p class="text-center text-[0.65rem] text-text-muted mt-1">Page {num}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/experiments" class="text-text-muted hover:text-text-primary text-sm transition-colors">← Experiments</a>
+      <a href="/" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">Back to Overview →</a>
+    </div>
+  </div>
+</Layout>

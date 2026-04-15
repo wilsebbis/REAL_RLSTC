@@ -1,0 +1,6 @@
+/data[[:space:]]copy.tar.gz filter=lfs diff=lfs merge=lfs -text
+/data/Geolife filter=lfs diff=lfs merge=lfs -text
+/data/Tdrive filter=lfs diff=lfs merge=lfs -text
+/data/Tdrive_norm_traj filter=lfs diff=lfs merge=lfs -text
+/data/geolife_norm_traj filter=lfs diff=lfs merge=lfs -text
+/data/geolife_testdata filter=lfs diff=lfs merge=lfs -text

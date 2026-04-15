@@ -1,0 +1,189 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CodeBlock from "../components/CodeBlock.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="Neural Network | RLSTC Documentation" currentPage="/neural-network">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-teal mb-4">DQN</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">Neural Network</h1>
+      <p class="section-subtitle mb-12">
+        The <code class="text-teal text-sm">DeepQNetwork</code> class implements a compact DQN 
+        with experience replay, soft target updates, ε-greedy exploration, and Huber loss.
+      </p>
+    </div>
+
+    <DiagramCard caption="DQN architecture: 5 input features → 64 hidden (ReLU) → 2 Q-value outputs, with experience replay buffer and target network" accent="teal">
+      <img src="/images/dqn.png" alt="DQN Architecture" class="w-full rounded-lg" />
+    </DiagramCard>
+
+    <!-- Architecture -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">01</span> Network Architecture
+      </h2>
+
+      <div class="glass p-6 mb-6">
+        <div class="flex items-center justify-center gap-2 flex-wrap">
+          <div class="glass p-3 !rounded-lg text-center min-w-[80px]">
+            <div class="text-2xl font-bold text-accent">5</div>
+            <div class="text-[0.65rem] text-text-muted">Input</div>
+          </div>
+          <div class="text-text-muted text-2xl">→</div>
+          <div class="glass p-3 !rounded-lg text-center min-w-[80px]">
+            <div class="text-2xl font-bold text-teal">64</div>
+            <div class="text-[0.65rem] text-text-muted">Hidden (ReLU)</div>
+          </div>
+          <div class="text-text-muted text-2xl">→</div>
+          <div class="glass p-3 !rounded-lg text-center min-w-[80px]">
+            <div class="text-2xl font-bold text-purple">2</div>
+            <div class="text-[0.65rem] text-text-muted">Q-Values</div>
+          </div>
+        </div>
+        <div class="text-center mt-4 text-xs text-text-muted">
+          Total parameters: <strong class="text-text-primary">5×64 + 64 + 64×2 + 2 = <span class="text-accent">514</span></strong>
+        </div>
+      </div>
+
+      <CodeBlock filename="rl_nn.py" title="Network Definition">
+{`def _build_model(self):
+    model = Sequential()
+    model.add(Dense(64, input_dim=self.state_size, activation='relu'))
+    model.add(Dense(self.action_size))  # Linear output (no activation)
+    model.compile(
+        loss=self._huber_loss,
+        optimizer=SGD(lr=self.learning_rate)  # lr=0.001
+    )
+    return model`}
+      </CodeBlock>
+    </section>
+
+    <!-- Hyperparameters -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">02</span> Hyperparameters
+      </h2>
+      <div class="glass p-5">
+        <table class="styled-table">
+          <thead><tr><th>Parameter</th><th>Value</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td class="font-mono text-teal">gamma (γ)</td><td class="font-mono">0.99</td><td>Discount factor for future rewards</td></tr>
+            <tr><td class="font-mono text-teal">epsilon (ε)</td><td class="font-mono">1.0 → 0.1</td><td>Exploration rate (starts high, decays)</td></tr>
+            <tr><td class="font-mono text-teal">epsilon_decay</td><td class="font-mono">0.99</td><td>Multiplicative decay per replay step</td></tr>
+            <tr><td class="font-mono text-teal">learning_rate</td><td class="font-mono">0.001</td><td>SGD learning rate</td></tr>
+            <tr><td class="font-mono text-teal">memory_size</td><td class="font-mono">5000</td><td>Experience replay buffer capacity</td></tr>
+            <tr><td class="font-mono text-teal">batch_size</td><td class="font-mono">32</td><td>Mini-batch size for training</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Huber Loss -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">03</span> Huber Loss
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Combines MSE (smooth near zero) and MAE (robust to outliers) for stable Q-value learning:
+      </p>
+      <div class="math-block">
+        <div class="space-y-2">
+          <div class="text-text-primary font-mono">L(δ) = 0.5 × δ²&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if |δ| ≤ clip_delta</div>
+          <div class="text-text-primary font-mono">L(δ) = 0.5 × clip² + clip × (|δ| - clip)&nbsp;&nbsp;otherwise</div>
+        </div>
+      </div>
+      <CodeBlock filename="rl_nn.py" title="Huber Loss Implementation">
+{`def _huber_loss(self, y_true, y_pred, clip_delta=1.0):
+    error = y_true - y_pred
+    cond = K.abs(error) <= clip_delta
+    squared_loss = 0.5 * K.square(error)
+    quadratic_loss = 0.5 * K.square(clip_delta) + \\
+                     clip_delta * (K.abs(error) - clip_delta)
+    return K.mean(tf.where(cond, squared_loss, quadratic_loss))`}
+      </CodeBlock>
+    </section>
+
+    <!-- Action Selection -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">04</span> Action Selection
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="font-semibold text-xs text-accent mb-2">act() — Training</h4>
+          <p class="text-text-muted text-[0.7rem]">ε-greedy: random action with probability ε, otherwise argmax(Q-values). Used during training for exploration.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="font-semibold text-xs text-teal mb-2">online_act() — Validation</h4>
+          <p class="text-text-muted text-[0.7rem]">Pure greedy: always selects argmax(Q-values). Uses model.predict() — slower but uses the full Keras pipeline.</p>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="font-semibold text-xs text-purple mb-2">fast_online_act() — Inference</h4>
+          <p class="text-text-muted text-[0.7rem]">NumPy forward pass: <code class="text-xs">relu(x·W1 + b1)·W2 + b2</code>. Bypasses Keras overhead for production-speed inference.</p>
+        </div>
+      </div>
+
+      <CodeBlock filename="rl_nn.py" title="Three Action Selection Methods">
+{`def act(self, state):  # Training (ε-greedy)
+    if np.random.rand() <= self.epsilon:
+        return random.randrange(self.action_size)
+    act_values = self.model.predict(state)
+    return np.argmax(act_values[0])
+
+def fast_online_act(self, state):  # Inference (raw NumPy)
+    o1 = self.relu(np.dot(state, self.w1) + self.b1)
+    o2 = np.dot(o1, self.w2) + self.b2
+    return np.argmax(o2[0])
+
+def load(self, name):  # Extract weights for fast inference
+    self.model.load_weights(name)
+    self.w1 = self.model.get_weights()[0]  # Shape: (5, 64)
+    self.b1 = self.model.get_weights()[1]  # Shape: (64,)
+    self.w2 = self.model.get_weights()[2]  # Shape: (64, 2)
+    self.b2 = self.model.get_weights()[3]  # Shape: (2,)`}
+      </CodeBlock>
+    </section>
+
+    <!-- Experience Replay -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">05</span> Experience Replay & Target Updates
+      </h2>
+      <CodeBlock filename="rl_nn.py" title="replay() — Mini-Batch Training">
+{`def replay(self, episode, batch_size):
+    minibatch = random.sample(self.memory, batch_size)
+    for state, action, reward, next_state, done in minibatch:
+        target = self.model.predict(state)
+        # TD target: r + γ × max_a' Q_target(s', a')
+        target[0][action] = reward + (1 - done) * self.gamma * \\
+            np.amax(self.target_model.predict(next_state)[0])
+
+    states = np.vstack(states)
+    targets = np.vstack(targets)
+    self.model.fit(states, targets, epochs=1, verbose=0)
+
+    if self.epsilon > self.epsilon_min:
+        self.epsilon *= self.epsilon_decay  # Decay exploration`}
+      </CodeBlock>
+
+      <CodeBlock filename="rl_nn.py" title="Soft Target Update (Polyak Averaging)">
+{`def soft_update(self, w):  # w = 0.05 (train) or 0.001 (crosstrain)
+    temp = []
+    for i in range(len(self.model.get_weights())):
+        temp.append(
+            w * self.model.get_weights()[i] +      # Online weights
+            (1 - w) * self.target_model.get_weights()[i]  # Target weights
+        )
+    self.target_model.set_weights(temp)
+    # θ_target = τ·θ_online + (1-τ)·θ_target`}
+      </CodeBlock>
+    </section>
+
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/mdp-environment" class="text-text-muted hover:text-text-primary text-sm transition-colors">← MDP Environment</a>
+      <a href="/training" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">Training →</a>
+    </div>
+  </div>
+</Layout>

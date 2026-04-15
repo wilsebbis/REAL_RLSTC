@@ -1,0 +1,138 @@
+[
+  {
+    "page": 1,
+    "image_file": "page_1.png",
+    "figure_labels": [
+      "Fig.1"
+    ]
+  },
+  {
+    "page": 2,
+    "image_file": "page_2.png",
+    "figure_labels": [
+      "Fig. 1"
+    ]
+  },
+  {
+    "page": 3,
+    "image_file": "page_3.png",
+    "figure_labels": [
+      "Fig. 2",
+      "Fig.2"
+    ]
+  },
+  {
+    "page": 4,
+    "image_file": "page_4.png",
+    "figure_labels": [
+      "Fig.2",
+      "Figure2",
+      "Fig. 3"
+    ]
+  },
+  {
+    "page": 5,
+    "image_file": "page_5.png",
+    "figure_labels": [
+      "Fig.3"
+    ]
+  },
+  {
+    "page": 6,
+    "image_file": "page_6.png",
+    "figure_labels": [
+      "Fig. 4",
+      "Fig.5",
+      "Fig. 5"
+    ]
+  },
+  {
+    "page": 7,
+    "image_file": "page_7.png",
+    "figure_labels": [
+      "Figure6"
+    ]
+  },
+  {
+    "page": 8,
+    "image_file": "page_8.png",
+    "figure_labels": [
+      "Fig. 6"
+    ]
+  },
+  {
+    "page": 9,
+    "image_file": "page_9.png",
+    "figure_labels": [
+      "Fig. 7",
+      "Figure7"
+    ]
+  },
+  {
+    "page": 10,
+    "image_file": "page_10.png",
+    "figure_labels": []
+  },
+  {
+    "page": 11,
+    "image_file": "page_11.png",
+    "figure_labels": [
+      "Fig.10"
+    ]
+  },
+  {
+    "page": 12,
+    "image_file": "page_12.png",
+    "figure_labels": [
+      "Fig. 8",
+      "Fig. 9",
+      "Fig. 10",
+      "Fig.11"
+    ]
+  },
+  {
+    "page": 13,
+    "image_file": "page_13.png",
+    "figure_labels": [
+      "Fig. 11",
+      "Fig.12",
+      "Fig.13",
+      "Figure 14c",
+      "Figure 15a"
+    ]
+  },
+  {
+    "page": 14,
+    "image_file": "page_14.png",
+    "figure_labels": [
+      "Fig. 12"
+    ]
+  },
+  {
+    "page": 15,
+    "image_file": "page_15.png",
+    "figure_labels": [
+      "Fig. 13",
+      "Fig. 14",
+      "Fig. 15",
+      "Figure 15b",
+      "Fig.16",
+      "Fig. 16"
+    ]
+  },
+  {
+    "page": 16,
+    "image_file": "page_16.png",
+    "figure_labels": []
+  },
+  {
+    "page": 17,
+    "image_file": "page_17.png",
+    "figure_labels": []
+  },
+  {
+    "page": 18,
+    "image_file": "page_18.png",
+    "figure_labels": []
+  }
+]

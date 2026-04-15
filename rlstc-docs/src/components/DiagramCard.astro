@@ -1,0 +1,24 @@
+---
+interface Props {
+  caption?: string;
+  accent?: "coral" | "teal" | "purple" | "amber";
+}
+
+const { caption, accent = "teal" } = Astro.props;
+
+const accentColors = {
+  coral: "oklch(70% 0.2 30 / 0.15)",
+  teal: "oklch(72% 0.15 175 / 0.15)",
+  purple: "oklch(68% 0.18 300 / 0.15)",
+  amber: "oklch(78% 0.16 80 / 0.15)",
+};
+---
+
+<div class="diagram-container my-8 reveal">
+  <div class="p-6" style={`background: ${accentColors[accent]}`}>
+    <slot />
+  </div>
+  {caption && (
+    <div class="diagram-caption">{caption}</div>
+  )}
+</div>

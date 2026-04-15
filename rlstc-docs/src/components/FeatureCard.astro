@@ -1,0 +1,35 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  icon: string;
+  accent?: "coral" | "teal" | "purple" | "amber";
+}
+
+const { title, description, href, icon, accent = "teal" } = Astro.props;
+
+const glowMap = {
+  coral: "oklch(70% 0.2 30 / 0.08)",
+  teal: "oklch(72% 0.15 175 / 0.08)",
+  purple: "oklch(68% 0.18 300 / 0.08)",
+  amber: "oklch(78% 0.16 80 / 0.08)",
+};
+---
+
+<a href={href} class="glass block p-5 group no-underline">
+  <div class="flex items-start gap-4">
+    <div
+      class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-transform duration-300 group-hover:scale-110"
+      style={`background: ${glowMap[accent]};`}
+    >
+      {icon}
+    </div>
+    <div class="min-w-0">
+      <h3 class="font-display font-semibold text-text-primary text-sm mb-1 group-hover:text-accent transition-colors">
+        {title}
+      </h3>
+      <p class="text-text-muted text-xs leading-relaxed line-clamp-2">{description}</p>
+    </div>
+  </div>
+</a>

@@ -1,0 +1,38 @@
+---
+interface Props {
+  step: number;
+  title: string;
+  accent?: "coral" | "teal" | "purple" | "amber";
+}
+
+const { step, title, accent = "teal" } = Astro.props;
+
+const accentMap = {
+  coral: { bg: "oklch(70% 0.2 30 / 0.1)", border: "oklch(70% 0.2 30 / 0.3)", text: "var(--color-accent)" },
+  teal: { bg: "oklch(72% 0.15 175 / 0.1)", border: "oklch(72% 0.15 175 / 0.3)", text: "var(--color-teal)" },
+  purple: { bg: "oklch(68% 0.18 300 / 0.1)", border: "oklch(68% 0.18 300 / 0.3)", text: "var(--color-purple)" },
+  amber: { bg: "oklch(78% 0.16 80 / 0.1)", border: "oklch(78% 0.16 80 / 0.3)", text: "var(--color-amber)" },
+};
+
+const colors = accentMap[accent];
+---
+
+<div class="flex gap-4 my-6 reveal">
+  <div class="flex flex-col items-center shrink-0">
+    <div
+      class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono"
+      style={`background: ${colors.bg}; border: 2px solid ${colors.border}; color: ${colors.text};`}
+    >
+      {step}
+    </div>
+    <div class="flex-1 w-0.5 mt-2 opacity-20" style={`background: ${colors.text};`}></div>
+  </div>
+  <div class="flex-1 pb-8">
+    <h4 class="font-display font-semibold text-text-primary mb-2" style={`color: ${colors.text};`}>
+      {title}
+    </h4>
+    <div class="text-text-secondary text-sm leading-relaxed space-y-3">
+      <slot />
+    </div>
+  </div>
+</div>

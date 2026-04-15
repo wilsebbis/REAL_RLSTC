@@ -1,0 +1,345 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CodeBlock from "../components/CodeBlock.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="Experiments | RLSTC Documentation" currentPage="/experiments">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-coral mb-4">Results</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">Experiments</h1>
+      <p class="section-subtitle mb-12">
+        Comprehensive experimental evaluation covering effectiveness, efficiency, segmentation method comparison, 
+        training data impact, cluster count sensitivity, and ablation studies.
+      </p>
+    </div>
+
+    <!-- Experiments Dashboard Image -->
+    <DiagramCard caption="Experimental results dashboard: CR convergence, method comparison, efficiency scaling, and k-value sensitivity" accent="coral">
+      <img src="/images/experiments.png" alt="Experimental Results Dashboard" class="w-full rounded-lg" />
+    </DiagramCard>
+
+    <!-- Paper Figures: OD and SSE charts -->
+    <div class="mt-6 reveal">
+      <DiagramCard caption="Figs. 8 & 9 from paper — OD and SSE across 4 distance metrics on T-Drive and Geolife datasets" accent="accent">
+        <img src="/images/paper/page_12.png" alt="Paper Figs. 8 & 9: OD and SSE comparison bar charts" class="w-full rounded-lg" />
+      </DiagramCard>
+    </div>
+
+    <!-- Experiment 1: Effectiveness -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">01</span> Effectiveness — Cross-Validation
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Measures clustering quality using k-fold cross-validation. The Competitive Ratio (CR) and optional 
+        Sum of Squared Errors (SSE) are computed across all folds.
+      </p>
+
+      <CodeBlock filename="terminal" title="Run effectiveness evaluation">
+{`cd subtrajcluster/
+python crossvalidate.py -calsse 1`}
+      </CodeBlock>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="font-semibold text-sm text-text-primary mb-3">What it measures</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="glass p-4 !rounded-lg">
+            <div class="text-sm font-semibold text-accent mb-1">Competitive Ratio (CR)</div>
+            <p class="text-text-muted text-xs">How much did RL segmentation improve over baseline? CR &lt; 1.0 = improvement. Averaged across 5 folds.</p>
+          </div>
+          <div class="glass p-4 !rounded-lg">
+            <div class="text-sm font-semibold text-teal mb-1">SSE (with -calsse 1)</div>
+            <p class="text-text-muted text-xs">Intra-cluster variance. Sum of squared pairwise distances within each cluster, normalized by cluster size.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Experiment 2: Efficiency -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">02</span> Efficiency — Scalability
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Tests how running time scales with dataset size (500 to 2500 trajectories):
+      </p>
+
+      <CodeBlock filename="terminal" title="Scalability experiments">
+{`python rl_estimate.py -amount 500  -caltime 1
+python rl_estimate.py -amount 1000 -caltime 1   # default
+python rl_estimate.py -amount 1500 -caltime 1
+python rl_estimate.py -amount 2000 -caltime 1
+python rl_estimate.py -amount 2500 -caltime 1`}
+      </CodeBlock>
+
+      <!-- Scalability visualization -->
+      <DiagramCard caption="Expected: near-linear scaling — the RL inference (fast_online_act) is O(1) per point, total cost is dominated by incremental IED computation" accent="coral">
+        <div class="flex items-end gap-2 justify-center h-32">
+          <div class="flex flex-col items-center gap-1">
+            <div class="w-10 rounded-t bg-accent/40 border border-accent/50" style="height: 20%;"></div>
+            <span class="text-[0.6rem] text-text-muted">500</span>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <div class="w-10 rounded-t bg-accent/50 border border-accent/60" style="height: 40%;"></div>
+            <span class="text-[0.6rem] text-text-muted">1000</span>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <div class="w-10 rounded-t bg-accent/60 border border-accent/70" style="height: 60%;"></div>
+            <span class="text-[0.6rem] text-text-muted">1500</span>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <div class="w-10 rounded-t bg-accent/70 border border-accent/80" style="height: 80%;"></div>
+            <span class="text-[0.6rem] text-text-muted">2000</span>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <div class="w-10 rounded-t bg-accent/80 border border-accent/90" style="height: 100%;"></div>
+            <span class="text-[0.6rem] text-text-muted">2500</span>
+          </div>
+        </div>
+      </DiagramCard>
+
+      <!-- Paper Fig. 10: Running time -->
+      <div class="mt-4">
+        <DiagramCard caption="Fig. 10 from paper — Running time comparison on T-Drive and Geolife" accent="accent">
+          <img src="/images/paper/page_12.png" alt="Fig. 10: Running time comparison" class="w-full rounded-lg" />
+        </DiagramCard>
+      </div>
+    </section>
+
+    <!-- Experiment 3: Segmentation Methods -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">03</span> Segmentation Method Comparison
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Tests RLSTC-generated sub-trajectories with three different downstream clustering algorithms to verify 
+        that the RL segmentation quality is robust across clustering methods.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-accent mb-2">🔴 AHC</h4>
+          <p class="text-text-muted text-xs mb-3">Agglomerative Hierarchical Clustering with average linkage and precomputed IED distance matrix.</p>
+          <CodeBlock filename="terminal" title="AHC commands">
+{`python rl_splitmethod.py \\
+  -clustermethod AHC
+python rl_splitmethod.py \\
+  -splittrajfile ../data/ied_subtrajs_200 \\
+  -clustermethod AHC`}
+          </CodeBlock>
+        </div>
+
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-teal mb-2">🟢 DBSCAN</h4>
+          <p class="text-text-muted text-xs mb-3">Density-based clustering. Parameters tuned per dataset size (eps, min_samples).</p>
+          <CodeBlock filename="terminal" title="DBSCAN commands">
+{`python rl_splitmethod.py \\
+  -ep 0.01 -sample 60
+python rl_splitmethod.py \\
+  -splittrajfile ../data/ied_subtrajs_400 \\
+  -ep 0.001 -sample 50`}
+          </CodeBlock>
+        </div>
+
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-purple mb-2">🔵 k-Means</h4>
+          <p class="text-text-muted text-xs mb-3">Custom k-means using IED distance with k-means++ initialization. Max 30 iterations.</p>
+          <CodeBlock filename="terminal" title="k-Means commands">
+{`python rl_splitmethod.py \\
+  -clustermethod kmeans
+python rl_splitmethod.py \\
+  -splittrajfile ../data/ied_subtrajs_1000 \\
+  -clustermethod kmeans`}
+          </CodeBlock>
+        </div>
+      </div>
+
+      <div class="glass p-4">
+        <p class="text-text-muted text-sm">
+          <strong class="text-text-primary">Data sizes tested:</strong> 100, 200, 400, 800, 1000 sub-trajectories. 
+          Generate sub-trajectories with: <code class="text-xs text-accent">python rl_estimate.py -modeldir ../savemodels/kfoldmodels3 -savesubtraj 1</code>
+        </p>
+      </div>
+    </section>
+
+    <!-- Experiment 4: Training Data Size -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">04</span> Impact of Training Data Size
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Tests whether more training data improves the learned segmentation policy. Models are trained 
+        on 1k-5k trajectories and evaluated on the same test set.
+      </p>
+
+      <CodeBlock filename="terminal" title="Training data size experiments">
+{`python rl_estimate.py -modeldir ../savemodels/1kmodels
+python rl_estimate.py -modeldir ../savemodels/2kmodels
+python rl_estimate.py -modeldir ../savemodels/3kmodels
+python rl_estimate.py -modeldir ../savemodels/4kmodels
+python rl_estimate.py -modeldir ../savemodels/5kmodels`}
+      </CodeBlock>
+
+      <DiagramCard caption="Expected diminishing returns: performance improves rapidly from 1k to 3k, then plateaus" accent="teal">
+        <div class="flex items-end gap-3 justify-center h-28">
+          {[
+            { label: "1k", height: "50%", opacity: "40" },
+            { label: "2k", height: "70%", opacity: "50" },
+            { label: "3k", height: "85%", opacity: "60" },
+            { label: "4k", height: "90%", opacity: "70" },
+            { label: "5k", height: "92%", opacity: "80" },
+          ].map((bar) => (
+            <div class="flex flex-col items-center gap-1">
+              <div class={`w-12 rounded-t bg-teal/${bar.opacity} border border-teal/50`} style={`height: ${bar.height};`}></div>
+              <span class="text-[0.65rem] text-text-muted">{bar.label}</span>
+            </div>
+          ))}
+        </div>
+      </DiagramCard>
+    </section>
+
+    <!-- Experiment 5: Value of k -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">05</span> Value of k (Number of Clusters)
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Tests sensitivity to the number of clusters k. Each value of k requires different pre-computed cluster centers.
+      </p>
+
+      <CodeBlock filename="terminal" title="Cluster count sensitivity">
+{`python rl_estimate.py -modeldir ../savemodels/modelsk5  \\
+  -base_cluster ../data/tdrive_clustercenter_5  -theta 0.2
+python rl_estimate.py -modeldir ../savemodels/modelsk8  \\
+  -base_cluster ../data/tdrive_clustercenter_8  -theta 0.2
+python rl_estimate.py -theta 0.2  # k=10 (default)
+python rl_estimate.py -modeldir ../savemodels/modelsk12 \\
+  -base_cluster ../data/tdrive_clustercenter_12 -theta 0.2
+python rl_estimate.py -modeldir ../savemodels/modelsk14 \\
+  -base_cluster ../data/tdrive_clustercenter_14 -theta 0.2`}
+      </CodeBlock>
+
+      <div class="glass p-5 mt-4">
+        <h4 class="font-semibold text-sm text-text-primary mb-2">🔑 Key Observations</h4>
+        <ul class="text-text-muted text-sm space-y-2 ml-4 list-disc">
+          <li>Lower k (5, 8) → coarser clusters, higher OD but more robust</li>
+          <li>Higher k (12, 14) → finer clusters, lower OD but risk of empty clusters</li>
+          <li>All experiments use <code class="text-xs text-accent">theta=0.2</code> (tighter convergence) for this analysis</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Experiment 6: OD_b Ablation -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">06</span> Impact of OD_b Feature
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Ablation study comparing the 5-feature MDP (with <code class="text-teal text-xs">overall_sim × 10</code>) 
+        against the 4-feature MDPwoODb (without it). Tests whether the scaled overall similarity signal 
+        provides meaningful information to the agent.
+      </p>
+
+      <CodeBlock filename="terminal" title="OD_b ablation">
+{`python rl_estimatewoODb.py
+# Uses MDPwoODb (4 features) and modelstate4 models`}
+      </CodeBlock>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-sm font-semibold text-accent mb-1">With OD_b (MDP.py)</h4>
+          <ul class="text-text-muted text-xs space-y-1 mt-2 ml-4 list-disc">
+            <li>5 features: includes overall_sim × 10</li>
+            <li>Center update: threshold_num=3, threshold_t=0.095</li>
+            <li>Default theta: 0.8</li>
+          </ul>
+        </div>
+        <div class="glass p-4 !rounded-lg">
+          <h4 class="text-sm font-semibold text-purple mb-1">Without OD_b (MDPwoODb.py)</h4>
+          <ul class="text-text-muted text-xs space-y-1 mt-2 ml-4 list-disc">
+            <li>4 features: scaled similarity removed</li>
+            <li>Center update: threshold_num=1, threshold_t=0.005</li>
+            <li>Default theta: 0.6</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Experiment 7: Iterations -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">07</span> Number of Iterations
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Studies how many iterative refinement rounds are needed for center convergence. 
+        Uses a higher iteration limit (25) and logs OD + max center drift per iteration.
+      </p>
+
+      <CodeBlock filename="terminal" title="Iteration convergence analysis">
+{`python iteration.py
+# Logs per iteration: 'iteration: X, OD: Y, maxdist: Z'
+# Runs up to 25 iterations (no theta-based early stopping)`}
+      </CodeBlock>
+
+      <DiagramCard caption="Typical convergence: OD decreases rapidly in first 3-5 iterations, then stabilizes" accent="amber">
+        <div class="flex items-end gap-1 justify-center h-24">
+          {[100, 75, 55, 42, 35, 32, 30, 29, 28.5, 28.2].map((h, i) => (
+            <div class="flex flex-col items-center gap-0.5">
+              <div
+                class="w-6 rounded-t border border-amber/40"
+                style={`height: ${h}%; background: oklch(78% 0.16 80 / ${0.3 + i * 0.07});`}
+              ></div>
+              <span class="text-[0.5rem] text-text-muted">{i + 1}</span>
+            </div>
+          ))}
+        </div>
+      </DiagramCard>
+    </section>
+
+    <!-- Summary -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4">Experiment Summary</h2>
+      <div class="glass p-5">
+        <table class="styled-table">
+          <thead>
+            <tr><th>Experiment</th><th>Variable</th><th>Metric</th><th>Script</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Effectiveness</td><td>Cross-validation</td><td>CR, SSE</td><td class="font-mono text-xs">crossvalidate.py</td></tr>
+            <tr><td>Efficiency</td><td>Data size (500-2500)</td><td>Time (sec)</td><td class="font-mono text-xs">rl_estimate.py</td></tr>
+            <tr><td>Segmentation</td><td>Clustering method</td><td>OD</td><td class="font-mono text-xs">rl_splitmethod.py</td></tr>
+            <tr><td>Training size</td><td>1k-5k trajectories</td><td>OD</td><td class="font-mono text-xs">rl_estimate.py</td></tr>
+            <tr><td>Cluster count</td><td>k = 5,8,10,12,14</td><td>OD</td><td class="font-mono text-xs">rl_estimate.py</td></tr>
+            <tr><td>OD_b ablation</td><td>Feature removal</td><td>OD</td><td class="font-mono text-xs">rl_estimatewoODb.py</td></tr>
+            <tr><td>Iterations</td><td>Refinement rounds</td><td>OD, drift</td><td class="font-mono text-xs">iteration.py</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Paper Figures Section -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">📄</span> Figures from the Paper
+      </h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <DiagramCard caption="Fig. 13 — Impact of OD_b on T-Drive and Geolife" accent="teal">
+          <img src="/images/paper/page_15.png" alt="Fig. 13: OD_b impact" class="w-full rounded-lg" />
+        </DiagramCard>
+        <DiagramCard caption="Fig. 14 — Impact of training data size & Fig. 15 — Iteration convergence" accent="amber">
+          <img src="/images/paper/page_15.png" alt="Figs. 14-15: Training data size and iteration convergence" class="w-full rounded-lg" />
+        </DiagramCard>
+      </div>
+      <p class="text-text-muted text-xs mt-3">
+        For the complete paper with all figures, tables, and equations, see <a href="/paper" class="text-accent hover:text-accent-hover transition-colors">The Paper →</a>
+      </p>
+    </section>
+
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/evaluation" class="text-text-muted hover:text-text-primary text-sm transition-colors">← Evaluation</a>
+      <a href="/paper" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">The Paper →</a>
+    </div>
+  </div>
+</Layout>

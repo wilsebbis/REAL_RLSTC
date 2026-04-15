@@ -1,0 +1,203 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CodeBlock from "../components/CodeBlock.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="MDP Environment | RLSTC Documentation" currentPage="/mdp-environment">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-coral mb-4">Reinforcement Learning</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">MDP Environment</h1>
+      <p class="section-subtitle mb-12">
+        The <code class="text-accent text-sm">TrajRLclus</code> class in MDP.py implements the RL environment. 
+        Each trajectory becomes an episode where the agent sequentially decides to EXTEND or CUT.
+      </p>
+    </div>
+
+    <DiagramCard caption="The RL agent traverses each trajectory point-by-point, choosing EXTEND (continue segment) or CUT (start new segment)" accent="coral">
+      <img src="/images/mdp.png" alt="MDP Agent Decision Diagram" class="w-full rounded-lg" />
+    </DiagramCard>
+
+    <!-- State Space -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">01</span> State Space — 5 Features
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        At each timestep, the environment provides a 5-dimensional observation vector that captures 
+        clustering quality, local segment quality, and positional progress:
+      </p>
+
+      <div class="space-y-3">
+        <div class="glass p-4 !rounded-lg flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center text-xs font-bold text-accent shrink-0">s₁</div>
+          <div>
+            <h4 class="font-semibold text-sm text-text-primary">overall_sim</h4>
+            <p class="text-text-muted text-xs mt-1">Running average of all sub-trajectory distances to their assigned cluster centers. This is the global clustering quality metric that the agent tries to minimize.</p>
+          </div>
+        </div>
+        <div class="glass p-4 !rounded-lg flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center text-xs font-bold text-accent shrink-0">s₂</div>
+          <div>
+            <h4 class="font-semibold text-sm text-text-primary">split_overdist / minsim</h4>
+            <p class="text-text-muted text-xs mt-1">The weighted average distance if the current segment were committed now. Shows the agent what the quality <em>would be</em> after a hypothetical cut.</p>
+          </div>
+        </div>
+        <div class="glass p-4 !rounded-lg flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-teal/15 flex items-center justify-center text-xs font-bold text-teal shrink-0">s₃</div>
+          <div>
+            <h4 class="font-semibold text-sm text-text-primary">overall_sim × 10</h4>
+            <p class="text-text-muted text-xs mt-1">Scaled version of the overall similarity — acts as an amplified signal for quality differentiation. <em class="text-text-muted">(Not present in MDPwoODb, which uses 4 features)</em></p>
+          </div>
+        </div>
+        <div class="glass p-4 !rounded-lg flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-purple/15 flex items-center justify-center text-xs font-bold text-purple shrink-0">s₄</div>
+          <div>
+            <h4 class="font-semibold text-sm text-text-primary">Segment Progress</h4>
+            <p class="text-text-muted text-xs mt-1"><code class="text-xs">(index - split_point + 2) / length</code> — How far into the current segment, normalized by trajectory length. Helps the agent gauge segment size.</p>
+          </div>
+        </div>
+        <div class="glass p-4 !rounded-lg flex items-start gap-4">
+          <div class="w-8 h-8 rounded-lg bg-amber/15 flex items-center justify-center text-xs font-bold text-amber shrink-0">s₅</div>
+          <div>
+            <h4 class="font-semibold text-sm text-text-primary">Remaining Progress</h4>
+            <p class="text-text-muted text-xs mt-1"><code class="text-xs">(length - (index + 1)) / length</code> — How much trajectory is left. Helps the agent avoid creating very short terminal segments.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Action Space -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">02</span> Action Space
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass p-5 !rounded-lg border-teal/20">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-teal/15 flex items-center justify-center text-sm font-bold text-teal">0</div>
+            <h4 class="font-semibold text-sm text-teal">EXTEND</h4>
+          </div>
+          <p class="text-text-muted text-xs leading-relaxed">
+            Append the current point to the active sub-trajectory. Updates the incremental distance 
+            to all cluster centers via <code class="text-xs">incremental_mindist()</code>. 
+            <strong class="text-text-secondary">Reward = 0</strong> (no immediate reward for extending).
+          </p>
+        </div>
+        <div class="glass p-5 !rounded-lg border-accent/20">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center text-sm font-bold text-accent">1</div>
+            <h4 class="font-semibold text-sm text-accent">CUT</h4>
+          </div>
+          <p class="text-text-muted text-xs leading-relaxed">
+            Terminate the current sub-trajectory and assign it to the nearest cluster. Start a new segment. 
+            <strong class="text-text-secondary">Reward = last_overall_sim - overall_sim</strong> (positive if clustering improved).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Reward Function -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">03</span> Reward Function
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        The reward is only non-zero on CUT actions. It measures the improvement in global clustering quality:
+      </p>
+      <div class="math-block">
+        <span class="text-text-primary font-mono text-lg">R = OD_before − OD_after</span>
+      </div>
+      <div class="glass p-5 mt-4">
+        <p class="text-text-muted text-sm">
+          <strong class="text-text-primary">Positive reward:</strong> The cut improved overall clustering distance (the new segmentation produced a better-fitting sub-trajectory).<br />
+          <strong class="text-text-primary">Negative reward:</strong> The cut worsened clustering quality (the agent split in a poor location).<br />
+          <strong class="text-text-primary">Zero reward:</strong> EXTEND actions always get zero reward — the agent only learns from the delayed outcome of cuts.
+        </p>
+      </div>
+    </section>
+
+    <!-- reset() and step() -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">04</span> Environment Methods
+      </h2>
+
+      <CodeBlock filename="MDP.py" title="reset() — Initialize Episode">
+{`def reset(self, episode, label='T'):
+    self.split_point = 0               # Start of current segment
+    self.length = self.trajsdata[episode].size
+    self.k_dict = {}                   # Incremental distance cache
+    for i in range(k):
+        self.k_dict[i] = {
+            'mid_dist': 1e10,          # Partial distance
+            'real_dist': 1e10,         # Full distance with tail
+            'lastp': Point(0, 0, 0),   # Last aligned point
+            'j': 0                     # Center trajectory index
+        }
+    self.traj_num = 1
+    # Compute initial distance to nearest cluster
+    self.minsim, self.k = incremental_mindist(...)
+    self.overall_sim = traj2trajIED(whole_traj, nearest_center)
+
+    observation = [overall_sim, minsim, overall_sim*10,
+                   2/length, (length-1)/length]
+    return observation, self.length`}
+      </CodeBlock>
+
+      <CodeBlock filename="MDP.py" title="step() — Execute Action (simplified)">
+{`def step(self, episode, action, index, label='T'):
+    if action == 0:  # EXTEND
+        if index+1 != self.length:
+            # Update incremental distance
+            self.next_minsim, self.k = incremental_mindist(...)
+            # Update projected overall distance
+            self.split_overdist = weighted_average(...)
+        else:
+            # Last point: finalize segment, add to cluster
+            subtraj = create_subtraj(split_point, index)
+            clusters[k].append(subtraj)
+        observation = [overall_sim, split_overdist, ...]
+        reward = 0  # No reward for extending
+        return observation, reward
+
+    if action == 1:  # CUT
+        subtraj = create_subtraj(split_point, index)
+        clusters[k].append(subtraj)
+        last_overall_sim = self.overall_sim
+        self.overall_sim = self.split_overdist
+        self.split_point = index      # Start new segment here
+        # Compute distance for new segment start
+        self.next_minsim, self.k = incremental_mindist(...)
+        observation = [overall_sim, split_overdist, ...]
+        reward = last_overall_sim - self.overall_sim
+        return observation, reward`}
+      </CodeBlock>
+    </section>
+
+    <!-- MDP vs MDPwoODb -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">05</span> MDP vs MDPwoODb
+      </h2>
+      <p class="text-text-secondary mb-4">Two environment variants are provided:</p>
+      <div class="glass p-5">
+        <table class="styled-table">
+          <thead><tr><th>Feature</th><th>MDP.py</th><th>MDPwoODb.py</th></tr></thead>
+          <tbody>
+            <tr><td>State dimensions</td><td class="text-accent font-mono">5</td><td class="text-purple font-mono">4</td></tr>
+            <tr><td>Feature s₃ (OD×10)</td><td class="text-teal">✓ Included</td><td class="text-text-muted">✗ Removed</td></tr>
+            <tr><td>Center update thresholds</td><td class="font-mono text-xs">num=3, t=0.095</td><td class="font-mono text-xs">num=1, t=0.005</td></tr>
+            <tr><td>Purpose</td><td>Full model (default)</td><td>Ablation: impact of OD_b feature</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/clustering" class="text-text-muted hover:text-text-primary text-sm transition-colors">← Clustering</a>
+      <a href="/neural-network" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">Neural Network →</a>
+    </div>
+  </div>
+</Layout>

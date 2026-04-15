@@ -1,0 +1,106 @@
+---
+interface Props {
+  currentPage?: string;
+}
+
+const { currentPage = "/" } = Astro.props;
+
+const navItems = [
+  { href: "/", label: "Overview", icon: "⚡", badge: "" },
+  { href: "/data-structures", label: "Data Structures", icon: "🔷", badge: "Core" },
+  { href: "/preprocessing", label: "Preprocessing", icon: "🔄", badge: "Data" },
+  { href: "/distance-metrics", label: "Distance Metrics", icon: "📐", badge: "Math" },
+  { href: "/clustering", label: "Clustering", icon: "🎯", badge: "Engine" },
+  { href: "/mdp-environment", label: "MDP Environment", icon: "🎮", badge: "RL" },
+  { href: "/neural-network", label: "Neural Network", icon: "🧠", badge: "DQN" },
+  { href: "/training", label: "Training", icon: "🏋️", badge: "Train" },
+  { href: "/evaluation", label: "Evaluation", icon: "📊", badge: "Eval" },
+  { href: "/experiments", label: "Experiments", icon: "🧪", badge: "Results" },
+  { href: "/paper", label: "The Paper", icon: "📄", badge: "VLDB" },
+];
+
+function getBadgeClass(badge: string): string {
+  const map: Record<string, string> = {
+    "Core": "badge-teal",
+    "Data": "badge-purple",
+    "Math": "badge-amber",
+    "Engine": "badge-coral",
+    "RL": "badge-coral",
+    "DQN": "badge-coral",
+    "Train": "badge-teal",
+    "Eval": "badge-purple",
+    "Results": "badge-amber",
+    "VLDB": "badge-accent",
+  };
+  return map[badge] || "badge-teal";
+}
+---
+
+<!-- Mobile toggle -->
+<button
+  id="sidebar-toggle"
+  class="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-xl glass"
+  aria-label="Toggle navigation"
+>
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <line x1="3" y1="6" x2="21" y2="6" />
+    <line x1="3" y1="12" x2="21" y2="12" />
+    <line x1="3" y1="18" x2="21" y2="18" />
+  </svg>
+</button>
+
+<!-- Mobile overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+
+<!-- Sidebar -->
+<aside
+  id="sidebar"
+  class="fixed top-0 left-0 h-full w-72 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out"
+>
+  <div class="h-full flex flex-col border-r border-white/[0.06] bg-bg-deep/95 backdrop-blur-xl">
+    <!-- Logo -->
+    <div class="p-6 pb-4">
+      <a href="/" class="block">
+        <div class="flex items-center gap-3 mb-1">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-accent to-teal flex items-center justify-center text-white font-bold text-sm">
+            RL
+          </div>
+          <div>
+            <h1 class="text-base font-bold font-display text-text-primary tracking-tight">RLSTC</h1>
+            <p class="text-[0.65rem] text-text-muted font-medium tracking-wide uppercase">Documentation</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Divider -->
+    <div class="mx-4 h-px bg-white/[0.06]"></div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={[
+            "sidebar-link",
+            { active: currentPage === item.href }
+          ]}
+        >
+          <span class="text-lg w-6 text-center shrink-0">{item.icon}</span>
+          <span class="flex-1">{item.label}</span>
+          {item.badge && (
+            <span class:list={["badge", getBadgeClass(item.badge)]}>{item.badge}</span>
+          )}
+        </a>
+      ))}
+    </nav>
+
+    <!-- Footer -->
+    <div class="p-4 border-t border-white/[0.06]">
+      <div class="text-[0.7rem] text-text-muted">
+        <p>Based on the paper</p>
+        <p class="text-text-secondary font-medium mt-0.5 leading-snug">"Sub-trajectory Clustering with Deep Reinforcement Learning"</p>
+      </div>
+    </div>
+  </div>
+</aside>

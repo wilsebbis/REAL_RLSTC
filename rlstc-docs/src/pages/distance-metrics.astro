@@ -1,0 +1,245 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CodeBlock from "../components/CodeBlock.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="Distance Metrics | RLSTC Documentation" currentPage="/distance-metrics">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-amber mb-4">Mathematical Foundations</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">Distance Metrics</h1>
+      <p class="section-subtitle mb-12">
+        The trajdistance.py module implements four trajectory distance metrics: 
+        IED (the primary metric), Fréchet, DTW, and a weighted segment distance.
+      </p>
+    </div>
+
+    <!-- Metric comparison table -->
+    <div class="glass p-6 mb-12 reveal">
+      <table class="styled-table">
+        <thead>
+          <tr><th>Metric</th><th>Type</th><th>Time-Aware</th><th>Used For</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="font-semibold text-accent">IED</td>
+            <td>Integral-based</td>
+            <td class="text-teal">✓ Yes</td>
+            <td>Primary clustering distance, MDP reward</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-purple">Fréchet</td>
+            <td>Minimax (dog-leash)</td>
+            <td class="text-text-muted">✗ No</td>
+            <td>Alternative distance (available but unused in default)</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-teal">DTW</td>
+            <td>Elastic matching</td>
+            <td class="text-text-muted">✗ No</td>
+            <td>Alternative distance (available but unused in default)</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-amber">Weighted (wd)</td>
+            <td>Segment-based</td>
+            <td class="text-text-muted">✗ No</td>
+            <td>TRACLUS-style segment comparison</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- IED -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-accent">01</span> Integrated Edit Distance (IED)
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        IED is the <strong class="text-text-primary">core distance metric</strong> of the entire system. 
+        Unlike Euclidean distance between point sets, IED accounts for temporal alignment — 
+        it integrates the spatial distance between two trajectories over their shared time range.
+      </p>
+
+      <!-- IED components diagram -->
+      <DiagramCard caption="IED decomposes trajectory distance into three temporal regions" accent="coral">
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-4">
+            <div class="w-40 text-right text-xs text-text-muted font-mono">Before overlap</div>
+            <div class="flex-1 h-8 rounded bg-accent/20 border border-accent/30 flex items-center px-3 text-xs text-accent">
+              getstaticIED() — Distance to nearest endpoint
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="w-40 text-right text-xs text-text-muted font-mono">Overlap region</div>
+            <div class="flex-1 h-8 rounded bg-teal/20 border border-teal/30 flex items-center px-3 text-xs text-teal">
+              Σ line2lineIDE() — Trapezoid integration
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="w-40 text-right text-xs text-text-muted font-mono">After overlap</div>
+            <div class="flex-1 h-8 rounded bg-purple/20 border border-purple/30 flex items-center px-3 text-xs text-purple">
+              getstaticIED() — Distance to nearest endpoint
+            </div>
+          </div>
+        </div>
+      </DiagramCard>
+
+      <div class="space-y-6">
+        <div>
+          <h3 class="font-semibold text-sm text-text-primary mb-2">line2lineIDE — Elementary Distance</h3>
+          <p class="text-text-muted text-sm mb-2">The atomic building block. Computes the average endpoint-to-endpoint distance scaled by time duration:</p>
+          <div class="math-block">
+            <span class="text-text-primary font-mono">d = 0.5 × (d(p1s, p2s) + d(p1e, p2e)) × (t_end - t_start)</span>
+          </div>
+          <CodeBlock filename="trajdistance.py" title="line2lineIDE — Trapezoid Integration">
+{`def line2lineIDE(p1s, p1e, p2s, p2e):
+    d1 = p1s.distance(p2s)   # Distance between starts
+    d2 = p1e.distance(p2e)   # Distance between ends
+    d = 0.5 * (d1 + d2) * (p1e.t - p1s.t)  # Trapezoid rule
+    return d`}
+          </CodeBlock>
+        </div>
+
+        <div>
+          <h3 class="font-semibold text-sm text-text-primary mb-2">makemid — Linear Interpolation</h3>
+          <p class="text-text-muted text-sm mb-2">Used throughout IED to create virtual points at matching timestamps when trajectories have different sample rates:</p>
+          <CodeBlock filename="trajdistance.py" title="makemid — Temporal Interpolation">
+{`def makemid(x1, t1, x2, t2, t):
+    # Linear interpolation between (x1,t1) and (x2,t2) at time t
+    return x1 + (t - t1) / (t2 - t1) * (x2 - x1)`}
+          </CodeBlock>
+        </div>
+
+        <div>
+          <h3 class="font-semibold text-sm text-text-primary mb-2">traj2trajIED — Full Trajectory Distance</h3>
+          <p class="text-text-muted text-sm mb-2">
+            The main distance function. Handles all temporal cases:
+            non-overlapping trajectories (returns 1e10), 
+            partial overlap (static + dynamic segments),
+            and full overlap (pure dynamic integration).
+          </p>
+          <CodeBlock filename="trajdistance.py" title="traj2trajIED — Main Distance Function (simplified)">
+{`def traj2trajIED(traj_points1, traj_points2):
+    t1s, t1e = traj_points1[0].t, traj_points1[-1].t
+    t2s, t2e = traj_points2[0].t, traj_points2[-1].t
+
+    if t1s >= t2e or t1e <= t2s:
+        return 1e10  # No temporal overlap
+
+    sum = 0
+    timedtraj = timedTraj(traj_points2, t1s, t1e)  # Clip traj2 to traj1's range
+    commontraj = timedTraj(traj_points1, timedtraj.ts, timedtraj.te)
+
+    # Add static distance for non-overlapping tails
+    if t1s < timedtraj.ts:
+        sum += getstaticIED(traj_points1, timedtraj.points[0].x, ...)
+    if t1e > timedtraj.te:
+        sum += getstaticIED(traj_points1, timedtraj.points[-1].x, ...)
+
+    # Integrate over common time range with aligned segments
+    # Uses dual-pointer merge of point sequences
+    while lasttime != timedtraj.te:
+        # Find next matching timestamp from either trajectory
+        # Interpolate missing points using makemid()
+        pd = line2lineIDE(lastp1, newp1, lastp2, newp2)
+        sum += pd
+    return sum`}
+          </CodeBlock>
+        </div>
+      </div>
+    </section>
+
+    <!-- Fréchet -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-purple">02</span> Fréchet Distance
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        The classic "dog-on-a-leash" distance. Finds the minimum leash length needed for a person walking 
+        along one trajectory and a dog walking along another, both moving only forward.
+      </p>
+      <div class="math-block">
+        <span class="text-text-primary font-mono">D[i,j] = max(cost(i,j), min(D[i-1,j], D[i,j-1], D[i-1,j-1]))</span>
+      </div>
+      <CodeBlock filename="trajdistance.py" title="Fréchet Distance — Dynamic Programming">
+{`class Distance:
+    def __init__(self, N, M):
+        self.D0 = np.zeros((N + 1, M + 1))
+        self.D0[0, 1:] = np.inf     # Base cases
+        self.D0[1:, 0] = np.inf
+        self.D = self.D0[1:, 1:]
+
+    def FRECHET(self, traj_C, traj_Q):
+        for i in range(len(traj_C)):
+            for j in range(len(traj_Q)):
+                cost = traj_C[i].distance(traj_Q[j])
+                self.D[i,j] = max(cost,
+                    min(self.D0[i,j], self.D0[i,j+1], self.D0[i+1,j]))
+        return self.D[-1, -1]`}
+      </CodeBlock>
+    </section>
+
+    <!-- DTW -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-teal">03</span> Dynamic Time Warping (DTW)
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Elastic matching that finds the optimal alignment between two sequences by warping the time axis. 
+        Uses <em>additive</em> accumulation (vs Fréchet's minimax).
+      </p>
+      <div class="math-block">
+        <span class="text-text-primary font-mono">D[i,j] = cost(i,j) + min(D[i-1,j], D[i,j-1], D[i-1,j-1])</span>
+      </div>
+      <CodeBlock filename="trajdistance.py" title="DTW — Dynamic Programming">
+{`class Dtwdistance:
+    def DTW(self, traj_C, traj_Q):
+        for i in range(len(traj_C)):
+            for j in range(len(traj_Q)):
+                temp_x = traj_C[i].x - traj_Q[j].x
+                temp_y = traj_C[i].y - traj_Q[j].y
+                cost = np.linalg.norm([temp_x, temp_y])
+                self.D[i,j] = cost + min(
+                    self.D0[i,j], self.D0[i,j+1], self.D0[i+1,j]
+                )
+        return self.D[-1, -1]`}
+      </CodeBlock>
+    </section>
+
+    <!-- MDL -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-amber">04</span> MDL Trajectory Cost
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        Used in preprocessing for trajectory simplification. Compares the information cost of keeping original 
+        points vs. using a simplified straight-line approximation.
+      </p>
+      <CodeBlock filename="trajdistance.py" title="traj_mdl_comp — MDL Cost Comparison">
+{`def traj_mdl_comp(points, start_index, curr_index, typed):
+    seg = Segment(points[start_index], points[curr_index])
+    h = 0; lh = 0
+    if typed == 'simp':
+        if seg.length > eps:
+            h = 0.5*math.log2(seg.length) + 0.5*(abs(Δt))
+        # Add perpendicular deviation cost
+        for i in range(start_index, curr_index):
+            new_p = interpolated_point_on_segment(...)
+            lh += points[i].distance(new_p)
+        if lh > eps: h += math.log2(lh)
+    elif typed == 'orign':
+        # Sum of log costs for each consecutive pair
+        for i in range(start_index, curr_index):
+            d = 0.5*(dist(p[i], p[i+1])) + 0.5*(abs(Δt))
+            if d > eps: h += math.log2(d)
+    return h`}
+      </CodeBlock>
+    </section>
+
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/preprocessing" class="text-text-muted hover:text-text-primary text-sm transition-colors">← Preprocessing</a>
+      <a href="/clustering" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">Clustering →</a>
+    </div>
+  </div>
+</Layout>

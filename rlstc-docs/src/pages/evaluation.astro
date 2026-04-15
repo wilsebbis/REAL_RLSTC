@@ -1,0 +1,238 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CodeBlock from "../components/CodeBlock.astro";
+import FlowStep from "../components/FlowStep.astro";
+import DiagramCard from "../components/DiagramCard.astro";
+---
+
+<Layout title="Evaluation | RLSTC Documentation" currentPage="/evaluation">
+  <div class="page-content py-12 lg:py-20">
+    <div class="reveal">
+      <span class="badge badge-amber mb-4">Evaluation</span>
+      <h1 class="section-title text-3xl lg:text-4xl mb-3">Evaluation & Inference</h1>
+      <p class="section-subtitle mb-12">
+        Three evaluation scripts handle inference, iterative refinement, and k-fold cross-validation: 
+        <code class="text-accent text-sm">rl_estimate.py</code>, <code class="text-teal text-sm">iteration.py</code>, 
+        and <code class="text-purple text-sm">crossvalidate.py</code>.
+      </p>
+    </div>
+
+    <!-- Iterative Refinement -->
+    <section class="mb-16">
+      <div class="reveal">
+        <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+          <span class="text-amber">01</span> Iterative Refinement — effective_rl()
+        </h2>
+        <p class="text-text-secondary mb-6 leading-relaxed">
+          The core evaluation loop. The trained agent segments all test trajectories, then cluster centers 
+          are recomputed. This process repeats until centers converge (drift below θ) or a max iteration count is reached.
+        </p>
+      </div>
+
+      <!-- Convergence Diagram -->
+      <DiagramCard caption="Iterative refinement: segment → cluster → update centers → repeat until convergence" accent="amber">
+        <div class="flex items-center justify-center gap-3 flex-wrap">
+          <div class="glass p-3 !rounded-lg text-center">
+            <div class="text-xl mb-1">🔪</div>
+            <div class="text-xs text-text-muted">Segment all<br/>trajectories</div>
+          </div>
+          <div class="text-text-muted text-xl">→</div>
+          <div class="glass p-3 !rounded-lg text-center">
+            <div class="text-xl mb-1">🎯</div>
+            <div class="text-xs text-text-muted">Assign to<br/>clusters</div>
+          </div>
+          <div class="text-text-muted text-xl">→</div>
+          <div class="glass p-3 !rounded-lg text-center">
+            <div class="text-xl mb-1">📍</div>
+            <div class="text-xs text-text-muted">Update<br/>centers</div>
+          </div>
+          <div class="text-text-muted text-xl">→</div>
+          <div class="glass p-3 !rounded-lg text-center">
+            <div class="text-xl mb-1">📏</div>
+            <div class="text-xs text-text-muted">Check<br/>drift &lt; θ</div>
+          </div>
+          <div class="text-text-muted text-xl">↩</div>
+        </div>
+      </DiagramCard>
+
+      <CodeBlock filename="rl_estimate.py" title="effective_rl() — Iterative Inference Loop">
+{`def effective_rl(elist, savesubtraj, theta):
+    count = 0
+    while True:
+        count += 1
+        # Phase 1: Segment all trajectories using trained agent
+        for e in elist:
+            observation, steps = env.reset(e, 'E')
+            for index in range(1, steps):
+                action = RL.fast_online_act(observation)  # NumPy forward pass
+                observation_, _ = env.step(e, action, index, 'E')
+                observation = observation_
+
+        # Phase 2: Record current centers
+        ori_centers = []
+        for i in env.clusters_E.keys():
+            ori_centers.append(env.clusters_E[i][2])
+
+        # Phase 3: Recompute centers based on new sub-trajectories
+        env.update_cluster('E')
+        overdist = env.basesim_E
+
+        # Phase 4: Check convergence (center drift)
+        temp_dist = []
+        for i in env.clusters_E.keys():
+            d = traj2trajIED(ori_centers[i], env.clusters_E[i][2])
+            temp_dist.append(d)
+
+        filtered = [x for x in temp_dist if x != 1e10]
+        max_drift = max(filtered) if filtered else 1e10
+
+        # Converge if drift < theta OR max iterations reached
+        if max_drift < theta or count == 8:
+            break
+
+    return overdist`}
+      </CodeBlock>
+
+      <div class="glass p-5 mt-4 reveal">
+        <h4 class="font-semibold text-sm text-text-primary mb-2">🎯 Convergence Criteria</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-text-muted"><strong class="text-amber">θ (theta)</strong> — Maximum allowed center drift between iterations.</p>
+            <ul class="text-text-muted text-xs mt-2 space-y-1 ml-4 list-disc">
+              <li>rl_estimate.py: <code class="text-xs">θ = 0.8</code> (default)</li>
+              <li>rl_estimatewoODb.py: <code class="text-xs">θ = 0.6</code></li>
+              <li>crossvalidate.py: <code class="text-xs">θ = 0.8</code></li>
+            </ul>
+          </div>
+          <div>
+            <p class="text-text-muted"><strong class="text-amber">Max iterations</strong> — Safety limit to prevent infinite loops.</p>
+            <ul class="text-text-muted text-xs mt-2 space-y-1 ml-4 list-disc">
+              <li>rl_estimate.py: <code class="text-xs">max = 8</code></li>
+              <li>iteration.py: <code class="text-xs">max = 25</code></li>
+              <li>crossvalidate.py: <code class="text-xs">max = 2</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Metrics -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-amber">02</span> Evaluation Metrics
+      </h2>
+
+      <div class="space-y-4">
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-accent mb-2">Overall Distance (OD)</h4>
+          <p class="text-text-muted text-sm">
+            Average IED distance from all sub-trajectories to their assigned cluster centers. 
+            Lower is better. Computed by <code class="text-xs text-teal">compute_overdist()</code>.
+          </p>
+          <div class="math-block mt-3">
+            <span class="text-text-primary font-mono">OD = Σᵢ Σⱼ IED(subtraj_ij, center_i) / N_total</span>
+          </div>
+        </div>
+
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-teal mb-2">Competitive Ratio (CR)</h4>
+          <p class="text-text-muted text-sm">
+            OD normalized by the baseline distance (before RL segmentation). CR &lt; 1.0 means the RL agent 
+            improved clustering quality compared to baseline.
+          </p>
+          <div class="math-block mt-3">
+            <span class="text-text-primary font-mono">CR = OD_segmented / OD_baseline</span>
+          </div>
+        </div>
+
+        <div class="glass p-5 !rounded-lg">
+          <h4 class="font-semibold text-sm text-purple mb-2">Sum of Squared Errors (SSE)</h4>
+          <p class="text-text-muted text-sm">
+            Optional metric computed during cross-validation (<code class="text-xs">-calsse 1</code> flag). 
+            Sum of squared pairwise IED distances within each cluster, normalized by cluster size.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cross-Validation -->
+    <section class="mb-16 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-amber">03</span> K-Fold Cross-Validation
+      </h2>
+      <p class="text-text-secondary mb-4 leading-relaxed">
+        The <code class="text-purple text-xs">crossvalidate.py</code> script loads k pre-trained models 
+        and evaluates each on its held-out test fold. Results are averaged across folds.
+      </p>
+
+      <CodeBlock filename="crossvalidate.py" title="Cross-Validation Evaluation">
+{`for i in range(args.k):
+    # Load model for fold i
+    savecluspath = args.saveclus + str(i)
+    model = savecluspath + '/' + modelnames[0]
+
+    # Load test set for fold i
+    testfilename = f'../data/{dataset}_testset{i}'
+    env = TrajRLclus(testfilename, baseclusT, baseclusE)
+    RL = DeepQNetwork(env.n_features, env.n_actions)
+
+    # Run iterative evaluation
+    OD, sse = estimate(testfilename, model, calsse, theta)
+    res1.append(OD)
+    res2.append(sse)
+
+print('Average OD:', np.mean(res1))
+if calsse: print('Average SSE:', np.mean(res2))`}
+      </CodeBlock>
+    </section>
+
+    <!-- Variant Comparison -->
+    <section class="mb-12 reveal">
+      <h2 class="text-xl font-display font-bold text-text-primary mb-4 flex items-center gap-2">
+        <span class="text-amber">04</span> Evaluation Script Comparison
+      </h2>
+      <div class="glass p-5">
+        <table class="styled-table">
+          <thead>
+            <tr><th>Script</th><th>Purpose</th><th>θ</th><th>Max Iter</th><th>Output</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-mono text-accent text-xs">rl_estimate.py</td>
+              <td>Standard inference</td>
+              <td class="font-mono">0.8</td>
+              <td class="font-mono">8</td>
+              <td>OD + optional sub-trajs</td>
+            </tr>
+            <tr>
+              <td class="font-mono text-purple text-xs">rl_estimatewoODb.py</td>
+              <td>Without OD_b feature</td>
+              <td class="font-mono">0.6</td>
+              <td class="font-mono">8</td>
+              <td>OD (ablation study)</td>
+            </tr>
+            <tr>
+              <td class="font-mono text-teal text-xs">iteration.py</td>
+              <td>Iteration analysis</td>
+              <td class="font-mono">—</td>
+              <td class="font-mono">25</td>
+              <td>OD per iteration</td>
+            </tr>
+            <tr>
+              <td class="font-mono text-amber text-xs">crossvalidate.py</td>
+              <td>K-fold validation</td>
+              <td class="font-mono">0.8</td>
+              <td class="font-mono">2</td>
+              <td>Avg OD + optional SSE</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="flex justify-between items-center pt-8 border-t border-white/[0.06] reveal">
+      <a href="/training" class="text-text-muted hover:text-text-primary text-sm transition-colors">← Training</a>
+      <a href="/experiments" class="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">Experiments →</a>
+    </div>
+  </div>
+</Layout>
