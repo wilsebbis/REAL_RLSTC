@@ -48,7 +48,7 @@ source .venv36/bin/activate
 ### 4. Install Dependencies
 ```bash
 pip install --upgrade pip
-pip install tensorflow==2.2.0 keras==2.4.3 scikit-learn==0.24.2 tqdm==4.62.0 numpy==1.19.2
+pip install -r requirements.txt
 ```
 
 ### 5. Extract Data and Models
