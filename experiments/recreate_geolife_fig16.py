@@ -43,13 +43,13 @@ def main():
         start = t.points[0]
         end = t.points[-1]
         
-        # Geolife: p.x is Lon, p.y is Lat
-        dist_to_center = math.hypot(start.y - center_lat, start.x - center_lon)
+        # Geolife original data: p.x is Lat, p.y is Lon
+        dist_to_center = math.hypot(start.x - center_lat, start.y - center_lon)
         if dist_to_center > 0.05:
             continue
             
-        diff_lat = end.y - start.y
-        diff_lon = end.x - start.x
+        diff_lat = end.x - start.x
+        diff_lon = end.y - start.y
         dist = math.hypot(diff_lat, diff_lon)
         
         if dist < 0.05:
@@ -100,14 +100,14 @@ def main():
         for traj_obj in trajectories:
             if not getattr(traj_obj, 'points', None):
                 continue
-            ax.plot([p.x for p in traj_obj.points], [p.y for p in traj_obj.points],
+            ax.plot([p.y for p in traj_obj.points], [p.x for p in traj_obj.points],
                     color="blue", linewidth=0.3, alpha=0.4)
                     
         for centroid in centroids:
             if not centroid:
                 continue
-            # Geolife: p.x is Lon, p.y is Lat.
-            ax.plot([p.x for p in centroid], [p.y for p in centroid],
+            # Geolife original data: p.y is Lon, p.x is Lat.
+            ax.plot([p.y for p in centroid], [p.x for p in centroid],
                     color=v["rep_color"], linewidth=2.5, alpha=0.9,
                     solid_capstyle="round")
 
