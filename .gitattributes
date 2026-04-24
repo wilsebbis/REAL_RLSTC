@@ -4,3 +4,5 @@
 /data/Tdrive_norm_traj filter=lfs diff=lfs merge=lfs -text
 /data/geolife_norm_traj filter=lfs diff=lfs merge=lfs -text
 /data/geolife_testdata filter=lfs diff=lfs merge=lfs -text
+latest_exp/geo-subtrajs filter=lfs diff=lfs merge=lfs -text
+latest_exp/geolife_rlstc_clusters filter=lfs diff=lfs merge=lfs -text
