@@ -7,6 +7,10 @@ import urllib.request
 import io
 import pickle
 import os
+import sys
+
+# Add the path to the traj module
+sys.path.append('RLSTCcode/subtrajcluster')
 
 # -------------------------------------------------------------
 # 1. Slippy Map Math for OSM Tiles
@@ -140,7 +144,7 @@ def plot_trajectories():
         print("Warning: Could not find pickled sub-trajectories (blue lines).")
 
     # --- RED LINES: Cluster Reps ---
-    cluster_paths = ["data/geolife_rlstc_clusters", "RLSTCcode/data/tdrive_clustercenter_10", "data/geolife_clustercenter"]
+    cluster_paths = ["RLSTCcode/data/geolife_rlstc_clusters", "RLSTCcode/data/tdrive_clustercenter_10", "RLSTCcode/data/geolife_clustercenter", "RLSTCcode/data/tdrive_clustercenter"]
     loaded_reds = False
     for cp in cluster_paths:
         if os.path.exists(cp):
