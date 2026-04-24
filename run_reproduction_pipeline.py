@@ -21,7 +21,7 @@ def main():
     cmd = [sys.executable, "rl_estimate.py", "-amount", "1000", "-savesubtraj", "1", "-caltime", "1"]
     
     try:
-        result = subprocess.run(cmd, cwd=subtraj_dir, capture_output=True, text=True)
+        result = subprocess.run(cmd, cwd=subtraj_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     except Exception as e:
         print(f"Failed to execute {cmd}: {e}")
         sys.exit(1)
@@ -51,7 +51,7 @@ def main():
         sys.exit(1)
         
     try:
-        plot_result = subprocess.run([sys.executable, plot_script], cwd=root_dir, capture_output=True, text=True)
+        plot_result = subprocess.run([sys.executable, plot_script], cwd=root_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         if plot_result.returncode == 0:
             print("Map generation successful!")
             for line in plot_result.stdout.split('\n'):
